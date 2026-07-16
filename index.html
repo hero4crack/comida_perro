@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Web con Supabase</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+<body>
+    <h1>Mis datos de Supabase:</h1>
+    <ul id="lista-datos">Cargando...</ul>
+
+    <script>
+        // 1. Configura tus credenciales (reemplaza con las tuyas de Supabase)
+        const SUPABASE_URL = "TU_SUPABASE_URL";
+        const SUPABASE_ANON_KEY = "TU_SUPABASE_ANON_KEY";
+
+        // 2. Inicializa el cliente de Supabase
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // 3. Función para obtener datos
+        async function obtenerDatos() {
+            const { data, error } = await supabase
+                .from('tu_tabla') // Pon aquí el nombre de tu tabla
+                .select('*');
+
+            const lista = document.getElementById('lista-datos');
+            lista.innerHTML = ''; // Limpiar el "Cargando..."
+
+            if (error) {
+                lista.innerHTML = `<li>Error: ${error.message}</li>`;
+                return;
+            }
+
+            data.forEach(item => {
+                const li = document.createElement('li');
+                li.textContent = item.nombre || JSON.stringify(item); // Reemplaza 'nombre' por tu columna
+                lista.appendChild(li);
+            });
+        }
+
+        obtenerDatos();
+    </script>
+</body>
+</html>
