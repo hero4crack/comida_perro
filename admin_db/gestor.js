@@ -47,7 +47,7 @@ const configuracionColumnas = {
         {title: "Fecha", field: "fecha", width: 130},
         {title: "Total Pedidos", field: "total_pedidos", width: 130},
         {title: "Ventas Totales ($)", field: "ventas_totales", width: 150},
-        {title: "Top 3 Sabores (JSON)", field: "top_sabores", formatter: "textarea"} // Mostrará los sabores más vendidos del día
+        {title: "Top 3 Sabores (JSON)", field: "top_sabores", formatter: "textarea"}
     ]
 };
 
@@ -107,9 +107,7 @@ async function cambiarTabla(nombreTabla, boton) {
     }
 }
 
-// 3. Ejecutar consultas SQL directas en la consola
-// Nota: Dado que las consultas SQL nativas no se pueden correr directamente desde JS público por seguridad,
-// usaremos el fallback inteligente de filtrado de datos si el query es un SELECT.
+// 3. Ejecutar consultas SQL directas con PODER TOTAL en PostgreSQL (vía RPC)
 async function ejecutarSQL() {
     const query = document.getElementById("sql-query").value.trim();
     const errorBox = document.getElementById("sql-error");
@@ -125,44 +123,52 @@ async function ejecutarSQL() {
     }
 
     try {
-        let respuestaData;
-        
-        // Analizador simple de SELECT en frontend
-        let tablaDestino = query.toLowerCase().match(/from\s+([a-zA-Z0-9_]+)/);
-        if(tablaDestino && query.toLowerCase().startsWith("select")) {
-            const { data, error } = await supabase.from(tablaDestino[1]).select('*');
-            if (error) throw error;
-            respuestaData = data;
-        } else {
-            // Mensaje informativo por si intentan modificar estructura sin privilegios de API directa
-            respuestaData = { status: "informacion", mensaje: "Consultas de tipo INSERT/UPDATE/DDL se deben hacer directo en el SQL Editor de Supabase por políticas de seguridad RLS." };
-        }
+        // Llamamos a la función almacenada de Postgres que creamos con SECURITY DEFINER
+        const { data, error } = await supabase.rpc('exec_sql_temp', { 
+            sql_query: query 
+        });
 
         resultadoDiv.innerHTML = "";
 
-        if (Array.isArray(respuestaData) && respuestaData.length > 0) {
-            const columnasDinamicas = Object.keys(respuestaData[0]).map(key => {
+        // Si la base de datos o la función retornaron un error
+        if (error || (data && data.error)) {
+            const errorMsg = error ? error.message : data.error;
+            errorBox.innerText = "Error de Sintaxis / Privilegios SQL: \n" + errorMsg;
+            errorBox.style.display = "block";
+            return;
+        }
+
+        // Si todo salió bien y devolvió filas (como un SELECT o INSERT...RETURNING)
+        if (Array.isArray(data) && data.length > 0) {
+            const columnasDinamicas = Object.keys(data[0]).map(key => {
                 return { title: key.toUpperCase(), field: key, headerSort: true };
             });
 
             if (tablaResultadoSQL) tablaResultadoSQL.destroy();
 
             tablaResultadoSQL = new Tabulator("#tabla-sql-resultado", {
-                data: respuestaData,
+                data: data,
                 layout: "fitColumns",
                 pagination: "local",
                 paginationSize: 5,
                 columns: columnasDinamicas
             });
         } else {
+            // Si fue un INSERT, UPDATE, DELETE o DDL (CREATE/DROP) exitoso que no devuelve filas
             resultadoDiv.innerHTML = `<div style="color: #00ff66; padding: 10px; background: #152515; border-radius:4px; font-size:14px;">
-                ✓ Consulta ejecutada. Mensaje: ${respuestaData.mensaje || "Sin retorno de filas."}
+                ✓ Comando SQL ejecutado con éxito (0 filas devueltas).
             </div>`;
+            
+            // Recargar automáticamente la pestaña interactiva de arriba por si se alteraron datos
+            const botonActivo = document.querySelector('.tab-btn.active');
+            if (botonActivo) {
+                cambiarTabla(tablaActual, botonActivo);
+            }
         }
 
     } catch (err) {
         resultadoDiv.innerHTML = "";
-        errorBox.innerText = "Error de Sintaxis / Filtro SQL: \n" + err.message;
+        errorBox.innerText = "Error inesperado en la consulta: \n" + err.message;
         errorBox.style.display = "block";
     }
 }
