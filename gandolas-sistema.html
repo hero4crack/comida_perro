@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Gandolas - Comida Natural para Perros y Gatos</title>
+<title>NaturalPet - Comida Natural para Perros y Gatos</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -415,7 +415,7 @@ function renderAuth() {
     <div style="margin-bottom:2rem;text-align:center">
       <div style="display:inline-flex;align-items:center;gap:0.75rem">
         <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--emerald-500),var(--emerald-700));display:flex;align-items:center;justify-content:center">${icon('paw')}</div>
-        <div style="text-align:left"><h1 style="font-size:1.5rem;font-weight:700">Gandolas</h1><p style="font-size:0.8rem;color:var(--gray-500)">Comida Natural para Perros y Gatos</p></div>
+        <div style="text-align:left"><h1 style="font-size:1.5rem;font-weight:700">NaturalPet</h1><p style="font-size:0.8rem;color:var(--gray-500)">Comida Natural para Perros y Gatos</p></div>
       </div>
     </div>
     <div class="auth-card">
@@ -445,7 +445,7 @@ function renderCliente() {
     <div class="header">
       <div class="header-logo">
         <div class="icon">${icon('paw')}</div>
-        <div><h1>Gandolas</h1><p>Hola, ${esc(name)}</p></div>
+        <div><h1>NaturalPet</h1><p>Hola, ${esc(name)}</p></div>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="logout()">${icon('logout','btn-icon')} Salir</button>
     </div>
@@ -457,7 +457,7 @@ function renderCliente() {
       </div>
       <div id="tab-content">${renderClienteTab()}</div>
     </div>
-    <div class="footer"><p>Gandolas &mdash; Comida Natural para Perros y Gatos</p></div>
+    <div class="footer"><p>NaturalPet &mdash; Comida Natural para Perros y Gatos</p></div>
   </div>`;
 }
 
@@ -596,7 +596,7 @@ function renderAdmin() {
     <div class="header">
       <div class="header-logo">
         <div class="icon">${icon('paw')}</div>
-        <div><h1>Gandolas Admin</h1><p>${icon('shield','btn-icon')} Panel de Administracion</p></div>
+        <div><h1>NaturalPet Admin</h1><p>${icon('shield','btn-icon')} Panel de Administracion</p></div>
       </div>
       <button class="btn btn-ghost btn-sm" onclick="logout()">${icon('logout','btn-icon')} Salir</button>
     </div>
@@ -607,7 +607,7 @@ function renderAdmin() {
       </div>
       <div id="tab-content">${state.tab === 'ventas' ? renderAdminVentas() : renderAdminReportes()}</div>
     </div>
-    <div class="footer"><p>Gandolas Admin &mdash; Panel de Administracion</p></div>
+    <div class="footer"><p>NaturalPet Admin &mdash; Panel de Administracion</p></div>
   </div>`;
 }
 
