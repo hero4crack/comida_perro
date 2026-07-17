@@ -1,4 +1,7 @@
-/* Estilos generales */
+/* ═══════════════════════════════════════════════════════════════════
+   ESTILOS - ADMIN DB (Panel de Gestión Directa)
+   ═══════════════════════════════════════════════════════════════════ */
+
 * {
     box-sizing: border-box;
 }
@@ -37,19 +40,6 @@ header p {
     color: #888;
     margin: 5px 0 0 0;
     font-size: 14px;
-}
-
-/* Alertas */
-.alert {
-    padding: 12px 18px;
-    border-radius: 6px;
-    margin-bottom: 15px;
-}
-
-.alert-danger {
-    background: #2a0a0a;
-    border: 1px solid #8b0000;
-    color: #ff6666;
 }
 
 /* Pestañas */
@@ -170,9 +160,12 @@ header p {
     min-height: 100px;
 }
 
-/* Tarjetas de estadísticas */
+/* Estadísticas */
 .stats-container {
-    display: none;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 20px;
 }
 
 .stat-card {
@@ -204,7 +197,6 @@ header p {
     -webkit-text-fill-color: transparent;
 }
 
-/* Colores específicos para cada stat */
 #stat-pendientes .stat-number {
     background: linear-gradient(135deg, #ff6b6b, #ee5a24);
     -webkit-background-clip: text;
@@ -221,6 +213,20 @@ header p {
     background: linear-gradient(135deg, #00b894, #00a86b);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+/* Creación rápida */
+.quick-create {
+    background: #0d0d1a;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #1a1a2e;
+}
+
+.quick-create h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #00d4ff;
 }
 
 /* Scroll personalizado */
@@ -277,11 +283,6 @@ header p {
     border-right: 1px solid #1a1a2e;
 }
 
-.tabulator .tabulator-row .tabulator-cell .tabulator-editing {
-    background: #1a1a2e;
-    color: #fff;
-}
-
 .tabulator .tabulator-footer {
     background: #1a1a2e;
     border-top: 1px solid #2a2a4e;
@@ -306,17 +307,17 @@ header p {
         font-size: 12px;
     }
     
-    .stat-card .stat-number {
-        font-size: 20px;
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
     }
     
-    .stats-container {
-        grid-template-columns: repeat(2, 1fr) !important;
+    .stat-card .stat-number {
+        font-size: 20px;
     }
 }
 
 @media (max-width: 480px) {
     .stats-container {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: 1fr;
     }
 }

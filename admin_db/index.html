@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel Admin - Comida Natural para Mascotas 🐾</title>
+    <title>🗄️ Admin DB - Gestión Directa de Base de Datos</title>
     
     <!-- CSS de Tabulator (Tema Oscuro) -->
     <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator_midnight.min.css" rel="stylesheet">
@@ -16,38 +16,40 @@
     <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
 </head>
 <body>
-
     <div class="container">
         <header>
-            <h1>🐾 Panel de Control - Comida Natural para Mascotas</h1>
-            <p>Gestión completa de pedidos, mascotas y clientes | <span id="usuario-actual" style="color: #00ff66;"></span></p>
-            <button onclick="cerrarSesion()" style="background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; margin-top: 5px;">
-                🔒 Cerrar Sesión
-            </button>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🗄️ Admin DB - Gestión Directa</h1>
+                    <p>Acceso directo a todas las tablas de la base de datos</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <a href="../index.html" style="color: #00d4ff; text-decoration: none; padding: 8px 15px; background: #1a1a2e; border-radius: 6px; border: 1px solid #2a2a4e;">
+                        🏠 Inicio
+                    </a>
+                </div>
+            </div>
         </header>
 
-        <div id="acceso-admin" class="alert alert-danger" role="alert" style="display:none;">
-            ⚠️ Solo el usuario administrador autenticado puede editar o ejecutar consultas en este panel.
-        </div>
-
         <!-- Barra de pestañas para cambiar de tabla -->
-        <div class="tabs" style="display:none;">
-            <button class="tab-btn active" onclick="cambiarTabla('pedidos', this)">📦 Pedidos</button>
-            <button class="tab-btn" onclick="cambiarTabla('mascotas', this)">🐕 Mascotas</button>
-            <button class="tab-btn" onclick="cambiarTabla('clientes', this)">👤 Clientes</button>
-            <button class="tab-btn" onclick="cambiarTabla('recetas', this)">🍖 Recetas</button>
+        <div class="tabs" id="tabs-container">
+            <button class="tab-btn active" data-tabla="pedidos">📦 Pedidos</button>
+            <button class="tab-btn" data-tabla="mascotas">🐕 Mascotas</button>
+            <button class="tab-btn" data-tabla="clientes">👤 Clientes</button>
+            <button class="tab-btn" data-tabla="recetas">🍖 Recetas</button>
         </div>
 
         <!-- Contenedor donde Tabulator dibujará la tabla activa -->
-        <div id="tabla-contenedor" style="display:none;"></div>
+        <div id="tabla-contenedor"></div>
 
         <!-- Consola SQL Ejecutable -->
-        <div class="sql-console" style="display:none;">
+        <div class="sql-console">
             <h2>💻 Consola SQL Directa</h2>
             <textarea id="sql-query" placeholder="Escribe tu consulta SQL aquí... Ejemplo: SELECT * FROM pedidos WHERE estado = 'Pendiente';"></textarea>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn-execute" onclick="ejecutarSQL()">▶️ Ejecutar Consulta</button>
                 <button class="btn-execute" onclick="limpiarSQL()" style="background: #6c757d;">🗑️ Limpiar</button>
+                <button class="btn-execute" onclick="insertarEjemploSQL()" style="background: #28a745;">📝 Insertar Ejemplo</button>
             </div>
             
             <div id="sql-resultado-container">
@@ -58,7 +60,7 @@
         </div>
 
         <!-- Estadísticas rápidas -->
-        <div class="stats-container" style="display:none; margin-top: 20px; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+        <div class="stats-container" id="stats-container">
             <div class="stat-card" id="stat-pendientes">
                 <h3>⏳ Pendientes</h3>
                 <p class="stat-number">0</p>
@@ -76,10 +78,28 @@
                 <p class="stat-number">0</p>
             </div>
         </div>
+
+        <!-- Panel de creación rápida de registros -->
+        <div class="quick-create" style="margin-top: 30px;">
+            <h2>⚡ Creación Rápida de Registros</h2>
+            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                <button class="btn-execute" onclick="crearRegistroRapido('pedidos')" style="background: #ff6b6b;">
+                    📦 Nuevo Pedido
+                </button>
+                <button class="btn-execute" onclick="crearRegistroRapido('mascotas')" style="background: #feca57; color: #000;">
+                    🐕 Nueva Mascota
+                </button>
+                <button class="btn-execute" onclick="crearRegistroRapido('clientes')" style="background: #48dbfb; color: #000;">
+                    👤 Nuevo Cliente
+                </button>
+                <button class="btn-execute" onclick="exportarTablaActual()" style="background: #2ed573; color: #000;">
+                    📥 Exportar CSV
+                </button>
+            </div>
+        </div>
     </div>
 
     <script src="config.js"></script>
-    <script src="auth.js"></script>
     <script src="gestor.js"></script>
 </body>
 </html>

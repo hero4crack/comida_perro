@@ -1,167 +1,165 @@
-// Variables globales
+// ═══════════════════════════════════════════════════════════════════
+//  GESTOR DE BASE DE DATOS - SIN AUTENTICACIÓN
+// ═══════════════════════════════════════════════════════════════════
+
 let tablaInteractiva = null;
 let tablaResultadoSQL = null;
 let tablaActual = 'pedidos';
 let datosCache = {};
 
-// 1. Configuración de columnas para las tablas conocidas (se conserva tu diseño)
+// Configuración de columnas para las tablas conocidas
 const configuracionColumnas = {
-    // Tabla de PEDIDOS (principal)
     pedidos: [
-        {title: "ID", field: "id", width: 80, headerSort: false, formatter: "rownum"},
+        {title: "#", field: "id", width: 70, headerSort: false, formatter: "rownum"},
         {title: "Lote", field: "nro_lote", width: 130, headerFilter: "input"},
         {title: "Cliente", field: "cliente_nombre", editor: "input", headerFilter: "input"},
         {title: "Mascota", field: "mascota_nombre", editor: "input", headerFilter: "input"},
         {title: "Peso (kg)", field: "peso", editor: "number", width: 90},
         {title: "Sabor", field: "sabor", editor: "list", editorParams: {values: ["Carne", "Pollo", "Mixta", "Personalizada"]}, width: 120},
-        {title: "Entrega", field: "fecha_entrega", editor: "date", width: 110},
-        {title: "Diaria (g)", field: "porcion_diaria", width: 90},
-        {title: "Semanal (kg)", field: "porcion_semanal", width: 100},
-        {title: "Mensual (kg)", field: "porcion_mensual", width: 100},
+        {title: "Porción", field: "periodo_porcion", width: 100},
+        {title: "Gramos", field: "cantidad_gramos", editor: "number", width: 90},
+        {title: "Entrega", field: "fecha_entrega", editor: "date", width: 120},
         {title: "Estado", field: "estado", editor: "list", editorParams: {values: ["Pendiente", "En Curso", "Completado"]}, formatter: "lookup", formatterParams: {
             "Pendiente": "⏳ Pendiente",
             "En Curso": "🔄 En Curso",
             "Completado": "✅ Completado"
         }, width: 130},
-        {title: "Pago", field: "metodo_pago", width: 120},
-        {title: "Creado", field: "creado_en", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:MM"}}
+        {title: "Pago", field: "metodo_pago", editor: "list", editorParams: {values: ["Efectivo", "Transferencia", "Tarjeta"]}, width: 130},
+        {title: "Monto $", field: "monto_total", editor: "number", formatter: "money", formatterParams: {decimal: ",", thousand: ".", symbol: "$"}, width: 120},
+        {title: "Creado", field: "created_at", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:mm"}}
     ],
     
-    // Tabla de MASCOTAS
     mascotas: [
-        {title: "ID", field: "id", width: 80, headerSort: false, formatter: "rownum"},
-        {title: "Nombre", field: "mascota_nombre", editor: "input", headerFilter: "input"},
-        {title: "Propietario", field: "propietario_nombre", editor: "input", headerFilter: "input"},
-        {title: "Edad", field: "edad", editor: "number", width: 70},
-        {title: "Peso (kg)", field: "peso", editor: "number", width: 90},
+        {title: "#", field: "id", width: 70, headerSort: false, formatter: "rownum"},
+        {title: "Nombre", field: "nombre", editor: "input", headerFilter: "input"},
+        {title: "Tipo", field: "tipo", editor: "list", editorParams: {values: ["Perro", "Gato"]}, width: 80},
+        {title: "Edad (años)", field: "edad_anios", editor: "number", width: 90},
+        {title: "Edad (meses)", field: "edad_meses", editor: "number", width: 90},
+        {title: "Peso (kg)", field: "peso_kg", editor: "number", width: 90},
         {title: "Sexo", field: "sexo", editor: "list", editorParams: {values: ["Macho", "Hembra"]}, width: 90},
         {title: "Raza", field: "raza", editor: "input", headerFilter: "input"},
         {title: "Actividad", field: "actividad_fisica", editor: "list", editorParams: {values: ["Alta", "Media", "Baja"]}, width: 100},
-        {title: "Condiciones", field: "condiciones_medicas", editor: "input"},
+        {title: "Condiciones", field: "condicion_medica", editor: "input"},
         {title: "Picky", field: "picky_eater", editor: "tickCross", formatter: "tickCross", width: 80},
         {title: "Alergias", field: "alergias", editor: "input"},
-        {title: "Sabor Pref.", field: "sabor_preferido", editor: "list", editorParams: {values: ["Carne", "Pollo", "Mixta", "Personalizada"]}, width: 110}
+        {title: "Creado", field: "created_at", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:mm"}}
     ],
     
-    // Tabla de CLIENTES (basado en usuarios)
     clientes: [
-        {title: "ID", field: "id", width: 80, headerSort: false, formatter: "rownum"},
-        {title: "Nombre", field: "nombre_completo", editor: "input", headerFilter: "input"},
-        {title: "Email", field: "correo", editor: "input", headerFilter: "input"},
+        {title: "#", field: "id", width: 70, headerSort: false, formatter: "rownum"},
+        {title: "Nombre", field: "nombre_propietario", editor: "input", headerFilter: "input"},
+        {title: "Email", field: "email", editor: "input", headerFilter: "input"},
         {title: "Teléfono", field: "telefono", editor: "input"},
-        {title: "Rol", field: "rol", editor: "list", editorParams: {values: ["cliente", "admin", "operador"]}, width: 110},
-        {title: "Activo", field: "activo", editor: "tickCross", formatter: "tickCross", width: 90},
-        {title: "Creado", field: "creado_en", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY"}}
+        {title: "Dirección", field: "direccion", editor: "input"},
+        {title: "Creado", field: "created_at", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:mm"}}
     ],
     
-    // Tabla de RECETAS
     recetas: [
-        {title: "ID", field: "id", width: 80, headerSort: false, formatter: "rownum"},
+        {title: "#", field: "id", width: 70, headerSort: false, formatter: "rownum"},
         {title: "Nombre", field: "nombre", editor: "input", headerFilter: "input"},
         {title: "Ingredientes", field: "ingredientes", editor: "input"},
         {title: "% Carne", field: "proporcion_carne", editor: "number", width: 90},
         {title: "% Vegetales", field: "proporcion_vegetales", editor: "number", width: 100},
         {title: "% Cereales", field: "proporcion_cereales", editor: "number", width: 100},
         {title: "Calorías/g", field: "calorias_por_gramo", editor: "number", width: 100},
-        {title: "Activa", field: "activo", editor: "tickCross", formatter: "tickCross", width: 80}
+        {title: "Activa", field: "activo", editor: "tickCross", formatter: "tickCross", width: 80},
+        {title: "Creado", field: "created_at", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:mm"}}
     ]
 };
 
-// 1.1. NUEVO: Crear pestañas de navegación dinámicamente
+// Inicialización
+document.addEventListener("DOMContentLoaded", async () => {
+    console.log('🔄 Inicializando Admin DB...');
+    
+    // Cargar pestañas dinámicas
+    await inicializarPestañasDinamicas();
+    
+    // Cargar tabla por defecto
+    await cambiarTabla('pedidos');
+    
+    // Cargar estadísticas
+    actualizarEstadisticas();
+    
+    console.log('✅ Admin DB listo');
+});
+
+// Inicializar pestañas dinámicamente
 async function inicializarPestañasDinamicas() {
-    const contenedorTabs = document.querySelector('.tabs');
-    if (!contenedorTabs) return;
-
     try {
-        // Llamamos a la función de Postgres para que nos de las tablas reales de la DB
         const { data: tablas, error } = await supabaseAdminPanel.rpc('obtener_todas_las_tablas');
-
-        if (error) {
-            console.error("❌ Error obteniendo la lista de tablas:", error);
-            // Fallback: usar las tablas que tenemos en nuestra configuración local si falla la llamada RPC
+        
+        if (!error && tablas && tablas.length > 0) {
+            const nombresTablas = tablas.map(t => t.nombre_tabla);
+            pintarBotonesPestaña(nombresTablas);
+        } else {
+            // Fallback: usar tablas configuradas
             pintarBotonesPestaña(Object.keys(configuracionColumnas));
-            return;
         }
-
-        // Extraer los nombres y pintar
-        const nombresTablas = tablas.map(t => t.nombre_tabla);
-        pintarBotonesPestaña(nombresTablas);
-
     } catch (err) {
-        console.error("❌ Falló la inicialización dinámica de pestañas:", err);
+        console.log('ℹ️ Usando tablas predefinidas');
         pintarBotonesPestaña(Object.keys(configuracionColumnas));
     }
 }
 
-// Auxiliar para inyectar los botones de las pestañas en el HTML
 function pintarBotonesPestaña(listaTablas) {
-    const contenedorTabs = document.querySelector('.tabs');
-    if (!contenedorTabs) return;
+    const contenedor = document.getElementById('tabs-container');
+    if (!contenedor) return;
 
-    contenedorTabs.innerHTML = ''; // Vaciar estáticos
+    contenedor.innerHTML = '';
+    
+    const iconos = {
+        'pedidos': '📦',
+        'mascotas': '🐕',
+        'clientes': '👤',
+        'recetas': '🍖'
+    };
 
     listaTablas.forEach((nombre, index) => {
         const boton = document.createElement('button');
         boton.className = `tab-btn ${nombre === tablaActual ? 'active' : ''}`;
-        boton.textContent = nombre.charAt(0).toUpperCase() + nombre.slice(1);
-        boton.onclick = () => cambiarTabla(nombre, boton);
-        contenedorTabs.appendChild(boton);
+        boton.dataset.tabla = nombre;
+        boton.textContent = `${iconos[nombre] || '📋'} ${nombre.charAt(0).toUpperCase() + nombre.slice(1)}`;
+        boton.onclick = () => cambiarTabla(nombre);
+        contenedor.appendChild(boton);
     });
 }
 
-// 2. Función para cambiar de tabla
-async function cambiarTabla(nombreTabla, boton) {
-    if (!puedeEditarPanel()) {
-        alert('⚠️ Solo el administrador autenticado puede ver y editar este panel.');
-        return;
-    }
-
+// Cambiar de tabla
+async function cambiarTabla(nombreTabla) {
     tablaActual = nombreTabla;
 
-    // Actualizar pestañas
-    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
-    if (boton) {
-        boton.classList.add('active');
-    } else {
-        // Si se llamó sin botón (ej. al inicio), buscar y activar el botón correcto
-        const botones = document.querySelectorAll('.tab-btn');
-        botones.forEach(btn => {
-            if (btn.textContent.toLowerCase() === nombreTabla.toLowerCase()) {
-                btn.classList.add('active');
-            }
-        });
-    }
+    // Actualizar pestañas activas
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.tabla === nombreTabla);
+    });
 
     try {
-        // Obtener datos de la tabla
-        const { data, error } = await supabaseAdminPanel.from(nombreTabla).select('*');
-        
-        if (error) {
-            console.error("❌ Error cargando tabla:", error);
-            alert("Error al conectar con la tabla: " + error.message);
-            return;
-        }
+        // Obtener datos
+        const { data, error } = await supabaseAdminPanel
+            .from(nombreTabla)
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(200);
 
-        // Guardar en caché
+        if (error) throw error;
+
         datosCache[nombreTabla] = data;
 
-        // Obtener columnas configuradas
+        // Configurar columnas
         let columnas = configuracionColumnas[nombreTabla] || [];
         
         if (columnas.length === 0 && data && data.length > 0) {
-            // Si no hay configuración preestablecida (¡Es una tabla nueva!), crear columnas dinámicas automáticamente
             columnas = Object.keys(data[0]).map(key => ({
                 title: key.replace(/_/g, ' ').toUpperCase(),
                 field: key,
                 editor: "input",
-                headerFilter: "input" // Les agregamos filtro de cabecera por defecto para mantener el estándar
+                headerFilter: "input"
             }));
         }
 
-        // Destruir tabla anterior si existe
+        // Destruir tabla anterior
         if (tablaInteractiva) {
             tablaInteractiva.destroy();
-            tablaInteractiva = null;
         }
 
         // Crear nueva tabla
@@ -170,34 +168,31 @@ async function cambiarTabla(nombreTabla, boton) {
             layout: "fitColumns",
             responsiveLayout: "hide",
             pagination: "local",
-            paginationSize: 20,
+            paginationSize: 25,
             placeholder: "📭 No hay registros en esta tabla",
             columns: columnas,
             height: "500px",
             rowFormatter: function(row) {
-                // Colorear filas según estado en pedidos
                 if (nombreTabla === 'pedidos') {
                     const estado = row.getData().estado;
-                    if (estado === 'Pendiente') {
-                        row.getElement().style.backgroundColor = '#2a1a1a';
-                    } else if (estado === 'En Curso') {
-                        row.getElement().style.backgroundColor = '#1a2a1a';
-                    } else if (estado === 'Completado') {
-                        row.getElement().style.backgroundColor = '#1a2a2a';
-                    }
+                    const colores = {
+                        'Pendiente': '#2a1a1a',
+                        'En Curso': '#1a2a1a',
+                        'Completado': '#1a2a2a'
+                    };
+                    row.getElement().style.backgroundColor = colores[estado] || '';
                 }
             }
         });
 
-        // Evento de auto-guardado al editar
+        // Auto-guardado al editar
         tablaInteractiva.on("cellEdited", async function(cell) {
             const filaDatos = cell.getRow().getData();
-            const columnaModificada = cell.getField();
-            const nuevoValor = cell.getValue();
+            const campo = cell.getField();
+            const valor = cell.getValue();
 
-            // Verificar que tenga ID
             if (!filaDatos.id) {
-                alert('❌ No se puede editar: el registro no tiene ID');
+                alert('❌ Registro sin ID');
                 cell.restoreOldValue();
                 return;
             }
@@ -205,160 +200,115 @@ async function cambiarTabla(nombreTabla, boton) {
             try {
                 const { error: updateError } = await supabaseAdminPanel
                     .from(tablaActual)
-                    .update({ [columnaModificada]: nuevoValor })
+                    .update({ [campo]: valor })
                     .eq('id', filaDatos.id);
 
                 if (updateError) {
-                    console.error("❌ Error al actualizar:", updateError);
-                    alert("No se pudo guardar el cambio: " + updateError.message);
-                    cell.restoreOldValue();
-                } else {
-                    console.log(`✅ Actualizado [${tablaActual}] ID: ${filaDatos.id} - ${columnaModificada}: ${nuevoValor}`);
-                    // Actualizar estadísticas si es pedidos
-                    if (tablaActual === 'pedidos') {
-                        actualizarEstadisticas();
-                    }
+                    throw updateError;
                 }
+
+                console.log(`✅ Actualizado: ${tablaActual}.${campo} = ${valor}`);
+                if (tablaActual === 'pedidos') actualizarEstadisticas();
+                
             } catch (err) {
-                console.error("❌ Error:", err);
+                console.error("❌ Error al actualizar:", err);
                 alert("Error al guardar: " + err.message);
                 cell.restoreOldValue();
             }
         });
 
-        // Actualizar estadísticas
-        if (nombreTabla === 'pedidos') {
-            actualizarEstadisticas();
-        }
-
-        console.log(`✅ Tabla "${nombreTabla}" cargada con ${data?.length || 0} registros`);
+        console.log(`✅ Tabla "${nombreTabla}" cargada (${data?.length || 0} registros)`);
 
     } catch (err) {
         console.error("❌ Error cargando tabla:", err);
-        alert("Error al cargar la tabla: " + err.message);
+        document.getElementById('tabla-contenedor').innerHTML = 
+            `<div style="color: #ff4444; padding: 20px; text-align: center;">
+                ❌ Error al cargar "${nombreTabla}": ${err.message}
+            </div>`;
     }
 }
 
-// 3. Función para actualizar estadísticas
+// Actualizar estadísticas
 async function actualizarEstadisticas() {
     try {
         const { data, error } = await supabaseAdminPanel
             .from('pedidos')
             .select('estado');
         
-        if (error) throw error;
+        if (error) return;
 
-        const pendientes = data.filter(p => p.estado === 'Pendiente').length;
-        const enCurso = data.filter(p => p.estado === 'En Curso').length;
-        const completados = data.filter(p => p.estado === 'Completado').length;
+        const stats = {
+            pendientes: data.filter(p => p.estado === 'Pendiente').length,
+            enCurso: data.filter(p => p.estado === 'En Curso').length,
+            completados: data.filter(p => p.estado === 'Completado').length,
+            total: data.length
+        };
 
-        const statPendientes = document.getElementById('stat-pendientes');
-        const statCurso = document.getElementById('stat-curso');
-        const statCompletados = document.getElementById('stat-completados');
-        const statTotal = document.getElementById('stat-total');
-        
-        if (statPendientes) statPendientes.querySelector('.stat-number').textContent = pendientes;
-        if (statCurso) statCurso.querySelector('.stat-number').textContent = enCurso;
-        if (statCompletados) statCompletados.querySelector('.stat-number').textContent = completados;
-        if (statTotal) statTotal.querySelector('.stat-number').textContent = data.length;
+        document.getElementById('stat-pendientes').querySelector('.stat-number').textContent = stats.pendientes;
+        document.getElementById('stat-curso').querySelector('.stat-number').textContent = stats.enCurso;
+        document.getElementById('stat-completados').querySelector('.stat-number').textContent = stats.completados;
+        document.getElementById('stat-total').querySelector('.stat-number').textContent = stats.total;
 
     } catch (err) {
         console.error("❌ Error actualizando estadísticas:", err);
     }
 }
 
-// 4. Función para ejecutar SQL desde la consola
+// Ejecutar SQL
 async function ejecutarSQL() {
     const query = document.getElementById("sql-query").value.trim();
     const errorBox = document.getElementById("sql-error");
     const resultadoDiv = document.getElementById("tabla-sql-resultado");
 
-    // Limpiar resultados anteriores
     errorBox.style.display = "none";
-    resultadoDiv.innerHTML = '<span style="color: #aaa;">⏳ Ejecutando consulta...</span>';
+    resultadoDiv.innerHTML = '<span style="color: #aaa;">⏳ Ejecutando...</span>';
 
     if (!query) {
-        alert("⚠️ Por favor, escribe una consulta SQL primero.");
-        resultadoDiv.innerHTML = "";
-        return;
-    }
-
-    // Verificar que sea admin
-    if (!puedeEditarPanel()) {
-        alert("⚠️ Solo administradores pueden ejecutar SQL");
+        resultadoDiv.innerHTML = '<span style="color: #ffaa00;">⚠️ Escribe una consulta SQL</span>';
         return;
     }
 
     try {
-        // Detectar tipo de consulta
         const queryLower = query.toLowerCase().trim();
-        const esSelect = queryLower.startsWith('select');
-        const esInsert = queryLower.startsWith('insert');
-        const esUpdate = queryLower.startsWith('update');
-        const esDelete = queryLower.startsWith('delete');
-
-        // Para SELECT, usar el método normal
-        if (esSelect) {
-            // Extraer nombre de tabla
+        
+        if (queryLower.startsWith('select')) {
+            // Para SELECT, extraer tabla y ejecutar
             const match = queryLower.match(/from\s+([a-zA-Z0-9_]+)/);
             if (match) {
                 const tabla = match[1];
-                // Intentar ejecutar con supabase
                 const { data, error } = await supabaseAdminPanel
                     .from(tabla)
-                    .select('*');
-                
+                    .select('*')
+                    .limit(100);
+
                 if (error) throw error;
 
                 if (data && data.length > 0) {
-                    // Crear columnas dinámicas
-                    const columnasDinamicas = Object.keys(data[0]).map(key => ({
+                    if (tablaResultadoSQL) tablaResultadoSQL.destroy();
+                    
+                    const columnas = Object.keys(data[0]).map(key => ({
                         title: key.replace(/_/g, ' ').toUpperCase(),
                         field: key,
                         headerSort: true
                     }));
-
-                    if (tablaResultadoSQL) {
-                        tablaResultadoSQL.destroy();
-                        tablaResultadoSQL = null;
-                    }
 
                     tablaResultadoSQL = new Tabulator("#tabla-sql-resultado", {
                         data: data,
                         layout: "fitColumns",
                         pagination: "local",
                         paginationSize: 10,
-                        columns: columnasDinamicas,
+                        columns: columnas,
                         height: "300px"
                     });
-
-                    resultadoDiv.innerHTML = '';
                 } else {
-                    resultadoDiv.innerHTML = `<div style="color: #ffaa00; padding: 10px; background: #2a2a00; border-radius:4px;">
-                        ✅ Consulta ejecutada. No hay datos para mostrar.
-                    </div>`;
-                }
-            } else {
-                resultadoDiv.innerHTML = `<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">
-                    ⚠️ No se pudo identificar la tabla en la consulta SELECT.
-                </div>`;
-            }
-        } 
-        // Para INSERT, UPDATE, DELETE
-        else if (esInsert || esUpdate || esDelete) {
-            // Advertencia para operaciones peligrosas
-            if (esDelete) {
-                if (!confirm('⚠️ ¿Estás seguro de eliminar estos registros? Esta acción no se puede deshacer.')) {
-                    return;
+                    resultadoDiv.innerHTML = '<div style="color: #ffaa00; padding: 10px; background: #2a2a00; border-radius:4px;">✅ Sin resultados</div>';
                 }
             }
+        } else if (queryLower.startsWith('insert') || queryLower.startsWith('update') || queryLower.startsWith('delete')) {
+            if (queryLower.startsWith('delete') && !confirm('⚠️ ¿Confirmas eliminar estos registros?')) return;
 
-            // Intentar ejecutar la consulta directamente
-            // Nota: Esto funciona mejor con la función RPC exec_sql
-            const { data, error } = await supabaseAdminPanel.rpc('exec_sql', {
-                query: query
-            });
-
+            const { data, error } = await supabaseAdminPanel.rpc('exec_sql', { query: query });
+            
             if (error) throw error;
 
             resultadoDiv.innerHTML = `<div style="color: #00ff66; padding: 10px; background: #001500; border-radius:4px; border: 1px solid #00ff66;">
@@ -366,26 +316,18 @@ async function ejecutarSQL() {
                 ${data ? '📊 Resultado: ' + JSON.stringify(data) : ''}
             </div>`;
 
-            // Recargar tabla actual si afecta a pedidos
-            if (queryLower.includes('pedidos')) {
-                setTimeout(() => recargarTablaActual(), 1000);
-            }
-        } 
-        else {
-            resultadoDiv.innerHTML = `<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">
-                ⚠️ Tipo de consulta no soportada. Solo SELECT, INSERT, UPDATE, DELETE.
-            </div>`;
+            setTimeout(() => cambiarTabla(tablaActual), 1000);
+        } else {
+            resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ Solo SELECT, INSERT, UPDATE, DELETE</div>';
         }
-
     } catch (err) {
-        console.error("❌ Error ejecutando SQL:", err);
-        resultadoDiv.innerHTML = "";
+        console.error("❌ Error SQL:", err);
         errorBox.innerText = "❌ Error: " + err.message;
         errorBox.style.display = "block";
+        resultadoDiv.innerHTML = '';
     }
 }
 
-// 5. Función para limpiar la consola SQL
 function limpiarSQL() {
     document.getElementById("sql-query").value = '';
     document.getElementById("tabla-sql-resultado").innerHTML = '';
@@ -396,94 +338,76 @@ function limpiarSQL() {
     }
 }
 
-// 6. Función para recargar tabla actual
-async function recargarTablaActual() {
-    if (tablaActual) {
-        const botonActivo = document.querySelector(`.tab-btn.active`);
-        await cambiarTabla(tablaActual, botonActivo);
-    }
+function insertarEjemploSQL() {
+    const ejemplos = {
+        pedidos: `INSERT INTO pedidos (nro_lote, cliente_id, mascota_id, sabor, periodo_porcion, cantidad_gramos, metodo_pago, fecha_entrega, monto_total, estado)
+VALUES ('LOT-001', 'ID_DEL_CLIENTE', 'ID_DE_LA_MASCOTA', 'Carne', 'Semanal', 500, 'Efectivo', '2024-12-25', 25.00, 'Pendiente');`,
+        mascotas: `INSERT INTO mascotas (cliente_id, nombre, tipo, edad_anios, edad_meses, peso_kg, sexo, raza, actividad_fisica)
+VALUES ('ID_DEL_CLIENTE', 'Rocky', 'Perro', 3, 6, 15.5, 'Macho', 'Labrador', 'Alta');`,
+        clientes: `INSERT INTO clientes (id, nombre_propietario, email, telefono, direccion)
+VALUES (gen_random_uuid(), 'María García', 'maria@email.com', '+58 412 1234567', 'Calle Principal #123');`
+    };
+    
+    const ejemplo = ejemplos[tablaActual] || 'SELECT * FROM ' + tablaActual + ' LIMIT 10;';
+    document.getElementById("sql-query").value = ejemplo;
 }
 
-// 7. Inicialización al cargar la página
-document.addEventListener("DOMContentLoaded", async () => {
-    // Verificar acceso
-    const acceso = await prepararAccesoPanel();
-    
-    if (!acceso) {
-        // Mostrar formulario de login si no hay sesión
-        mostrarLogin();
+// Crear registro rápido
+async function crearRegistroRapido(tabla) {
+    const datosPorDefecto = {
+        pedidos: {
+            nro_lote: 'LOT-' + Date.now().toString(36).toUpperCase(),
+            sabor: 'Carne',
+            periodo_porcion: 'Semanal',
+            cantidad_gramos: 500,
+            metodo_pago: 'Efectivo',
+            fecha_entrega: new Date().toISOString().split('T')[0],
+            monto_total: 25.00,
+            estado: 'Pendiente'
+        },
+        mascotas: {
+            nombre: 'Nueva Mascota',
+            tipo: 'Perro',
+            edad_anios: 1,
+            edad_meses: 0,
+            peso_kg: 10,
+            sexo: 'Macho',
+            actividad_fisica: 'Media'
+        },
+        clientes: {
+            nombre_propietario: 'Nuevo Cliente',
+            email: 'cliente@email.com',
+            telefono: '+58 412 0000000'
+        }
+    };
+
+    const datos = datosPorDefecto[tabla];
+    if (!datos) {
+        alert('Tabla no soportada para creación rápida');
         return;
     }
 
-    // Mostrar elementos
-    const tabs = document.querySelector('.tabs');
-    const tabla = document.getElementById('tabla-contenedor');
-    const sql = document.querySelector('.sql-console');
-    const stats = document.querySelector('.stats-container');
-    
-    if (tabs) tabs.style.display = 'flex';
-    if (tabla) tabla.style.display = 'block';
-    if (sql) sql.style.display = 'block';
-    if (stats) stats.style.display = 'grid';
+    try {
+        const { data, error } = await supabaseAdminPanel
+            .from(tabla)
+            .insert([datos])
+            .select();
 
-    // NUEVO: Inicializar las pestañas de forma dinámica preguntándole a Supabase
-    await inicializarPestañasDinamicas();
+        if (error) throw error;
 
-    // Cargar primera tabla por defecto (pedidos)
-    await cambiarTabla('pedidos', null);
-
-    // Cargar estadísticas
-    actualizarEstadisticas();
-
-    console.log('✅ Panel Admin inicializado correctamente');
-});
-
-// 8. Función para mostrar login
-function mostrarLogin() {
-    const container = document.querySelector('.container');
-    const loginHTML = `
-        <div id="login-container" style="max-width: 400px; margin: 50px auto; background: #1a1a2e; padding: 30px; border-radius: 10px; border: 1px solid #2a2a4e;">
-            <h2 style="color: #00d4ff; text-align: center; margin-bottom: 20px;">🔐 Acceso Admin</h2>
-            <form onsubmit="handleLogin(event)" style="display: flex; flex-direction: column; gap: 15px;">
-                <input type="email" id="login-email" placeholder="Email" required style="padding: 12px; border-radius: 6px; border: 1px solid #2a2a4e; background: #0a0a0a; color: white;">
-                <input type="password" id="login-password" placeholder="Contraseña" required style="padding: 12px; border-radius: 6px; border: 1px solid #2a2a4e; background: #0a0a0a; color: white;">
-                <button type="submit" style="padding: 12px; background: linear-gradient(135deg, #00d4ff, #7b2ffc); border: none; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; font-size: 16px;">
-                    Iniciar Sesión
-                </button>
-            </form>
-            <div id="login-error" style="color: #ff4444; text-align: center; margin-top: 10px; display: none;"></div>
-        </div>
-    `;
-    
-    // Reemplazar contenido
-    container.innerHTML = loginHTML;
+        alert(`✅ Registro creado en "${tabla}"`);
+        cambiarTabla(tabla);
+    } catch (err) {
+        alert('❌ Error: ' + err.message);
+    }
 }
 
-// 9. Función para manejar login
-async function handleLogin(event) {
-    event.preventDefault();
-    
-    const email = document.getElementById('login-email').value;
-    const password = document.getElementById('login-password').value;
-    const errorDiv = document.getElementById('login-error');
-    
-    try {
-        errorDiv.style.display = 'none';
-        
-        const { data, error } = await supabaseAdminPanel.auth.signInWithPassword({
-            email: email,
-            password: password
-        });
-        
-        if (error) throw error;
-        
-        // Recargar página para mostrar el panel
-        window.location.reload();
-        
-    } catch (error) {
-        errorDiv.textContent = '❌ ' + error.message;
-        errorDiv.style.display = 'block';
-        console.error('Error de login:', error);
+// Exportar tabla a CSV
+function exportarTablaActual() {
+    if (tablaInteractiva) {
+        tablaInteractiva.download("csv", `${tablaActual}-${new Date().toISOString().split('T')[0]}.csv`);
+    } else {
+        alert('⚠️ No hay tabla cargada para exportar');
     }
 }
 
@@ -491,6 +415,7 @@ async function handleLogin(event) {
 window.cambiarTabla = cambiarTabla;
 window.ejecutarSQL = ejecutarSQL;
 window.limpiarSQL = limpiarSQL;
-window.recargarTablaActual = recargarTablaActual;
+window.insertarEjemploSQL = insertarEjemploSQL;
+window.crearRegistroRapido = crearRegistroRapido;
+window.exportarTablaActual = exportarTablaActual;
 window.actualizarEstadisticas = actualizarEstadisticas;
-window.handleLogin = handleLogin;

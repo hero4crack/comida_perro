@@ -244,19 +244,28 @@ function bindAdminEvents() {
 }
 
 // Componentes compartidos
-function renderHeader(name) {
+// Después de la línea del header en renderAdmin()
+function renderAdmin() {
     return `
-    <div class="header">
-        <div class="header-logo">
-            <div class="icon">${icon('paw')}</div>
-            <div>
-                <h1>Gandolas</h1>
-                <p>Hola, ${esc(name)}</p>
+    <div class="app">
+        <div class="header">
+            <div class="header-logo">
+                <div class="icon">${icon('paw')}</div>
+                <div>
+                    <h1>Gandolas Admin</h1>
+                    <p>${icon('shield','btn-icon')} Panel de Administración</p>
+                </div>
+            </div>
+            <div style="display:flex; gap:10px; align-items:center;">
+                <a href="admin_db/index.html" class="btn btn-outline btn-sm" style="text-decoration:none;">
+                    🗄️ Admin DB
+                </a>
+                <button class="btn btn-ghost btn-sm" onclick="logout()">
+                    ${icon('logout','btn-icon')} Salir
+                </button>
             </div>
         </div>
-        <button class="btn btn-ghost btn-sm" onclick="logout()">
-            ${icon('logout','btn-icon')} Salir
-        </button>
+        ...
     </div>`;
 }
 
