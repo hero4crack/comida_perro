@@ -1,0 +1,328 @@
+/* ═══════════════════════════════════════════════════════════════════
+   ESTILOS - ADMIN DB (Panel de Gestión Directa)
+   ═══════════════════════════════════════════════════════════════════ */
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    background-color: #0a0a0a;
+    color: #e0e0e0;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    margin: 0;
+    padding: 20px;
+}
+
+.container {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+/* Header */
+header {
+    background: linear-gradient(135deg, #1a1a2e, #16213e);
+    padding: 20px 25px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    border: 1px solid #2a2a4e;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 28px;
+    background: linear-gradient(135deg, #00d4ff, #7b2ffc);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+header p {
+    color: #888;
+    margin: 5px 0 0 0;
+    font-size: 14px;
+}
+
+/* Pestañas */
+.tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+    flex-wrap: wrap;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #1a1a2e;
+}
+
+.tab-btn {
+    background: #1a1a2e;
+    color: #aaa;
+    border: 1px solid #2a2a4e;
+    padding: 10px 22px;
+    cursor: pointer;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.3s ease;
+}
+
+.tab-btn:hover {
+    background: #2a2a4e;
+    color: #fff;
+    transform: translateY(-2px);
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #00d4ff, #7b2ffc);
+    color: #fff;
+    border-color: #7b2ffc;
+    box-shadow: 0 4px 15px rgba(123, 47, 252, 0.3);
+}
+
+/* Contenedor de tabla */
+#tabla-contenedor {
+    margin-top: 10px;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid #1a1a2e;
+    min-height: 400px;
+}
+
+/* Consola SQL */
+.sql-console {
+    margin-top: 30px;
+    background: #0d0d1a;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #1a1a2e;
+}
+
+.sql-console h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #00d4ff;
+}
+
+#sql-query {
+    width: 100%;
+    height: 120px;
+    background: #0a0a0a;
+    color: #00ff66;
+    font-family: 'Courier New', Courier, monospace;
+    font-size: 14px;
+    border: 1px solid #1a1a2e;
+    border-radius: 6px;
+    padding: 12px;
+    resize: vertical;
+    transition: border 0.3s ease;
+}
+
+#sql-query:focus {
+    border-color: #7b2ffc;
+    outline: none;
+    box-shadow: 0 0 20px rgba(123, 47, 252, 0.1);
+}
+
+.btn-execute {
+    background: linear-gradient(135deg, #00d4ff, #7b2ffc);
+    color: white;
+    border: none;
+    padding: 10px 25px;
+    font-size: 14px;
+    font-weight: bold;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-execute:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 20px rgba(123, 47, 252, 0.4);
+}
+
+.btn-execute:active {
+    transform: translateY(0);
+}
+
+/* Resultado SQL */
+#sql-resultado-container {
+    margin-top: 20px;
+}
+
+#sql-resultado-container h3 {
+    font-size: 14px;
+    color: #888;
+    margin-bottom: 10px;
+}
+
+#tabla-sql-resultado {
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #1a1a2e;
+    min-height: 100px;
+}
+
+/* Estadísticas */
+.stats-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: #0d0d1a;
+    padding: 15px 20px;
+    border-radius: 8px;
+    border: 1px solid #1a1a2e;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.stat-card h3 {
+    margin: 0;
+    font-size: 14px;
+    color: #888;
+}
+
+.stat-card .stat-number {
+    font-size: 28px;
+    font-weight: bold;
+    margin: 5px 0 0 0;
+    background: linear-gradient(135deg, #00d4ff, #7b2ffc);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#stat-pendientes .stat-number {
+    background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#stat-curso .stat-number {
+    background: linear-gradient(135deg, #feca57, #f9a825);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+#stat-completados .stat-number {
+    background: linear-gradient(135deg, #00b894, #00a86b);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* Creación rápida */
+.quick-create {
+    background: #0d0d1a;
+    padding: 20px;
+    border-radius: 8px;
+    border: 1px solid #1a1a2e;
+}
+
+.quick-create h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #00d4ff;
+}
+
+/* Scroll personalizado */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: #0a0a0a;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #2a2a4e;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #7b2ffc;
+}
+
+/* Tabulator Overrides */
+.tabulator {
+    background: #0a0a0a;
+    border: none;
+}
+
+.tabulator .tabulator-header {
+    background: #1a1a2e;
+    border-bottom: 1px solid #2a2a4e;
+}
+
+.tabulator .tabulator-header .tabulator-col {
+    background: #1a1a2e;
+    border-right: 1px solid #2a2a4e;
+}
+
+.tabulator .tabulator-header .tabulator-col .tabulator-col-title {
+    color: #aaa;
+    font-weight: 600;
+}
+
+.tabulator .tabulator-row {
+    background: #0d0d1a;
+    border-bottom: 1px solid #1a1a2e;
+}
+
+.tabulator .tabulator-row:hover {
+    background: #1a1a2e;
+}
+
+.tabulator .tabulator-row .tabulator-cell {
+    color: #e0e0e0;
+    border-right: 1px solid #1a1a2e;
+}
+
+.tabulator .tabulator-footer {
+    background: #1a1a2e;
+    border-top: 1px solid #2a2a4e;
+}
+
+.tabulator .tabulator-footer .tabulator-paginator {
+    color: #aaa;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    body {
+        padding: 10px;
+    }
+    
+    .tabs {
+        gap: 5px;
+    }
+    
+    .tab-btn {
+        padding: 8px 12px;
+        font-size: 12px;
+    }
+    
+    .stats-container {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    
+    .stat-card .stat-number {
+        font-size: 20px;
+    }
+}
+
+@media (max-width: 480px) {
+    .stats-container {
+        grid-template-columns: 1fr;
+    }
+}

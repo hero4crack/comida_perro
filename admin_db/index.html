@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🗄️ Admin DB - Gestión Directa de Base de Datos</title>
+    
+    <!-- CSS de Tabulator (Tema Oscuro) -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator_midnight.min.css" rel="stylesheet">
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="estilos.css">
+    
+    <!-- SDK Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- JS de Tabulator -->
+    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h1>🗄️ Admin DB - Gestión Directa</h1>
+                    <p>Acceso directo a todas las tablas de la base de datos</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <a href="../index.html" style="color: #00d4ff; text-decoration: none; padding: 8px 15px; background: #1a1a2e; border-radius: 6px; border: 1px solid #2a2a4e;">
+                        🏠 Inicio
+                    </a>
+                </div>
+            </div>
+        </header>
+
+        <!-- Barra de pestañas para cambiar de tabla -->
+        <div class="tabs" id="tabs-container">
+            <button class="tab-btn active" data-tabla="pedidos">📦 Pedidos</button>
+            <button class="tab-btn" data-tabla="mascotas">🐕 Mascotas</button>
+            <button class="tab-btn" data-tabla="clientes">👤 Clientes</button>
+            <button class="tab-btn" data-tabla="recetas">🍖 Recetas</button>
+        </div>
+
+        <!-- Contenedor donde Tabulator dibujará la tabla activa -->
+        <div id="tabla-contenedor"></div>
+
+        <!-- Consola SQL Ejecutable -->
+        <div class="sql-console">
+            <h2>💻 Consola SQL Directa</h2>
+            <textarea id="sql-query" placeholder="Escribe tu consulta SQL aquí... Ejemplo: SELECT * FROM pedidos WHERE estado = 'Pendiente';"></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-execute" onclick="ejecutarSQL()">▶️ Ejecutar Consulta</button>
+                <button class="btn-execute" onclick="limpiarSQL()" style="background: #6c757d;">🗑️ Limpiar</button>
+                <button class="btn-execute" onclick="insertarEjemploSQL()" style="background: #28a745;">📝 Insertar Ejemplo</button>
+            </div>
+            
+            <div id="sql-resultado-container">
+                <h3>📊 Resultado:</h3>
+                <div id="tabla-sql-resultado"></div>
+                <pre id="sql-error" style="display:none; background: #500; color: #fff; padding: 10px; border-radius: 4px; font-family: monospace;"></pre>
+            </div>
+        </div>
+
+        <!-- Estadísticas rápidas -->
+        <div class="stats-container" id="stats-container">
+            <div class="stat-card" id="stat-pendientes">
+                <h3>⏳ Pendientes</h3>
+                <p class="stat-number">0</p>
+            </div>
+            <div class="stat-card" id="stat-curso">
+                <h3>🔄 En Curso</h3>
+                <p class="stat-number">0</p>
+            </div>
+            <div class="stat-card" id="stat-completados">
+                <h3>✅ Completados</h3>
+                <p class="stat-number">0</p>
+            </div>
+            <div class="stat-card" id="stat-total">
+                <h3>📊 Total Pedidos</h3>
+                <p class="stat-number">0</p>
+            </div>
+        </div>
+
+        <!-- Panel de creación rápida de registros -->
+        <div class="quick-create" style="margin-top: 30px;">
+            <h2>⚡ Creación Rápida de Registros</h2>
+            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                <button class="btn-execute" onclick="crearRegistroRapido('pedidos')" style="background: #ff6b6b;">
+                    📦 Nuevo Pedido
+                </button>
+                <button class="btn-execute" onclick="crearRegistroRapido('mascotas')" style="background: #feca57; color: #000;">
+                    🐕 Nueva Mascota
+                </button>
+                <button class="btn-execute" onclick="crearRegistroRapido('clientes')" style="background: #48dbfb; color: #000;">
+                    👤 Nuevo Cliente
+                </button>
+                <button class="btn-execute" onclick="exportarTablaActual()" style="background: #2ed573; color: #000;">
+                    📥 Exportar CSV
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="gestor.js"></script>
+</body>
+</html>
