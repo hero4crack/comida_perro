@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel Admin - Comida Natural para Mascotas 🐾</title>
+    
+    <!-- CSS de Tabulator (Tema Oscuro) -->
+    <link href="https://unpkg.com/tabulator-tables@5.5.2/dist/css/tabulator_midnight.min.css" rel="stylesheet">
+    <!-- Estilos personalizados -->
+    <link rel="stylesheet" href="estilos.css">
+    
+    <!-- SDK Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- JS de Tabulator -->
+    <script src="https://unpkg.com/tabulator-tables@5.5.2/dist/js/tabulator.min.js"></script>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>🐾 Panel de Control - Comida Natural para Mascotas</h1>
+            <p>Gestión completa de pedidos, mascotas y clientes | <span id="usuario-actual" style="color: #00ff66;"></span></p>
+            <button onclick="cerrarSesion()" style="background: #dc3545; color: white; border: none; padding: 5px 15px; border-radius: 4px; cursor: pointer; margin-top: 5px;">
+                🔒 Cerrar Sesión
+            </button>
+        </header>
+
+        <div id="acceso-admin" class="alert alert-danger" role="alert" style="display:none;">
+            ⚠️ Solo el usuario administrador autenticado puede editar o ejecutar consultas en este panel.
+        </div>
+
+        <!-- Barra de pestañas para cambiar de tabla -->
+        <div class="tabs" style="display:none;">
+            <button class="tab-btn active" onclick="cambiarTabla('pedidos', this)">📦 Pedidos</button>
+            <button class="tab-btn" onclick="cambiarTabla('mascotas', this)">🐕 Mascotas</button>
+            <button class="tab-btn" onclick="cambiarTabla('clientes', this)">👤 Clientes</button>
+            <button class="tab-btn" onclick="cambiarTabla('recetas', this)">🍖 Recetas</button>
+        </div>
+
+        <!-- Contenedor donde Tabulator dibujará la tabla activa -->
+        <div id="tabla-contenedor" style="display:none;"></div>
+
+        <!-- Consola SQL Ejecutable -->
+        <div class="sql-console" style="display:none;">
+            <h2>💻 Consola SQL Directa</h2>
+            <textarea id="sql-query" placeholder="Escribe tu consulta SQL aquí... Ejemplo: SELECT * FROM pedidos WHERE estado = 'Pendiente';"></textarea>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn-execute" onclick="ejecutarSQL()">▶️ Ejecutar Consulta</button>
+                <button class="btn-execute" onclick="limpiarSQL()" style="background: #6c757d;">🗑️ Limpiar</button>
+            </div>
+            
+            <div id="sql-resultado-container">
+                <h3>📊 Resultado:</h3>
+                <div id="tabla-sql-resultado"></div>
+                <pre id="sql-error" style="display:none; background: #500; color: #fff; padding: 10px; border-radius: 4px; font-family: monospace;"></pre>
+            </div>
+        </div>
+
+        <!-- Estadísticas rápidas -->
+        <div class="stats-container" style="display:none; margin-top: 20px; grid-template-columns: repeat(4, 1fr); gap: 15px;">
+            <div class="stat-card" id="stat-pendientes">
+                <h3>⏳ Pendientes</h3>
+                <p class="stat-number">0</p>
+            </div>
+            <div class="stat-card" id="stat-curso">
+                <h3>🔄 En Curso</h3>
+                <p class="stat-number">0</p>
+            </div>
+            <div class="stat-card" id="stat-completados">
+                <h3>✅ Completados</h3>
+                <p class="stat-number">0</p>
+            </div>
+            <div class="stat-card" id="stat-total">
+                <h3>📊 Total Pedidos</h3>
+                <p class="stat-number">0</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="gestor.js"></script>
+</body>
+</html>
