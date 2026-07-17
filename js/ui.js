@@ -18,6 +18,10 @@ function esc(s) {
 }
 
 function icon(name, cls = '') { 
+    if (!IC || !IC[name]) {
+        console.warn(`Ícono "${name}" no encontrado`);
+        return '';
+    }
     return `<span class="${cls}">${IC[name]}</span>`; 
 }
 
@@ -63,3 +67,5 @@ function bindExpandableRows() {
         });
     });
 }
+
+console.log('✅ UI utilities cargadas');

@@ -12,18 +12,12 @@ const configuracionColumnas = {
     pedidos: [
         {title: "#", field: "id", width: 70, headerSort: false, formatter: "rownum"},
         {title: "Lote", field: "nro_lote", width: 130, headerFilter: "input"},
-        {title: "Cliente", field: "cliente_nombre", editor: "input", headerFilter: "input"},
-        {title: "Mascota", field: "mascota_nombre", editor: "input", headerFilter: "input"},
-        {title: "Peso (kg)", field: "peso", editor: "number", width: 90},
+        {title: "Cliente ID", field: "cliente_id", width: 100, headerFilter: "input"},
+        {title: "Mascota ID", field: "mascota_id", width: 100, headerFilter: "input"},
         {title: "Sabor", field: "sabor", editor: "list", editorParams: {values: ["Carne", "Pollo", "Mixta", "Personalizada"]}, width: 120},
-        {title: "Porción", field: "periodo_porcion", width: 100},
+        {title: "Porción", field: "periodo_porcion", editor: "list", editorParams: {values: ["Diaria", "Semanal", "Mensual"]}, width: 100},
         {title: "Gramos", field: "cantidad_gramos", editor: "number", width: 90},
         {title: "Entrega", field: "fecha_entrega", editor: "date", width: 120},
-        {title: "Estado", field: "estado", editor: "list", editorParams: {values: ["Pendiente", "En Curso", "Completado"]}, formatter: "lookup", formatterParams: {
-            "Pendiente": "⏳ Pendiente",
-            "En Curso": "🔄 En Curso",
-            "Completado": "✅ Completado"
-        }, width: 130},
         {title: "Pago", field: "metodo_pago", editor: "list", editorParams: {values: ["Efectivo", "Transferencia", "Tarjeta"]}, width: 130},
         {title: "Monto $", field: "monto_total", editor: "number", formatter: "money", formatterParams: {decimal: ",", thousand: ".", symbol: "$"}, width: 120},
         {title: "Creado", field: "created_at", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:mm"}}
@@ -31,6 +25,7 @@ const configuracionColumnas = {
     
     mascotas: [
         {title: "#", field: "id", width: 70, headerSort: false, formatter: "rownum"},
+        {title: "Cliente ID", field: "cliente_id", width: 100, headerFilter: "input"},
         {title: "Nombre", field: "nombre", editor: "input", headerFilter: "input"},
         {title: "Tipo", field: "tipo", editor: "list", editorParams: {values: ["Perro", "Gato"]}, width: 80},
         {title: "Edad (años)", field: "edad_anios", editor: "number", width: 90},
@@ -51,19 +46,17 @@ const configuracionColumnas = {
         {title: "Email", field: "email", editor: "input", headerFilter: "input"},
         {title: "Teléfono", field: "telefono", editor: "input"},
         {title: "Dirección", field: "direccion", editor: "input"},
+        {title: "Rol", field: "rol", editor: "list", editorParams: {values: ["cliente", "admin"]}, width: 100},
         {title: "Creado", field: "created_at", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:mm"}}
     ],
     
-    recetas: [
+    profiles: [
         {title: "#", field: "id", width: 70, headerSort: false, formatter: "rownum"},
-        {title: "Nombre", field: "nombre", editor: "input", headerFilter: "input"},
-        {title: "Ingredientes", field: "ingredientes", editor: "input"},
-        {title: "% Carne", field: "proporcion_carne", editor: "number", width: 90},
-        {title: "% Vegetales", field: "proporcion_vegetales", editor: "number", width: 100},
-        {title: "% Cereales", field: "proporcion_cereales", editor: "number", width: 100},
-        {title: "Calorías/g", field: "calorias_por_gramo", editor: "number", width: 100},
-        {title: "Activa", field: "activo", editor: "tickCross", formatter: "tickCross", width: 80},
-        {title: "Creado", field: "created_at", width: 150, formatter: "datetime", formatterParams: {outputFormat: "DD/MM/YYYY HH:mm"}}
+        {title: "Email", field: "email", editor: "input", headerFilter: "input"},
+        {title: "Rol", field: "role", editor: "list", editorParams: {values: ["user", "admin"]}, formatter: "lookup", formatterParams: {
+            "user": "👤 User",
+            "admin": "👑 Admin"
+        }, width: 120}
     ]
 };
 
@@ -71,13 +64,8 @@ const configuracionColumnas = {
 document.addEventListener("DOMContentLoaded", async () => {
     console.log('🔄 Inicializando Admin DB...');
     
-    // Cargar pestañas dinámicas
     await inicializarPestañasDinamicas();
-    
-    // Cargar tabla por defecto
     await cambiarTabla('pedidos');
-    
-    // Cargar estadísticas
     actualizarEstadisticas();
     
     console.log('✅ Admin DB listo');
@@ -92,12 +80,13 @@ async function inicializarPestañasDinamicas() {
             const nombresTablas = tablas.map(t => t.nombre_tabla);
             pintarBotonesPestaña(nombresTablas);
         } else {
-            // Fallback: usar tablas configuradas
-            pintarBotonesPestaña(Object.keys(configuracionColumnas));
+            const tablasDefault = Object.keys(configuracionColumnas);
+            pintarBotonesPestaña(tablasDefault);
         }
     } catch (err) {
         console.log('ℹ️ Usando tablas predefinidas');
-        pintarBotonesPestaña(Object.keys(configuracionColumnas));
+        const tablasDefault = ['pedidos', 'mascotas', 'clientes', 'profiles'];
+        pintarBotonesPestaña(tablasDefault);
     }
 }
 
@@ -111,10 +100,11 @@ function pintarBotonesPestaña(listaTablas) {
         'pedidos': '📦',
         'mascotas': '🐕',
         'clientes': '👤',
+        'profiles': '🔑',
         'recetas': '🍖'
     };
 
-    listaTablas.forEach((nombre, index) => {
+    listaTablas.forEach((nombre) => {
         const boton = document.createElement('button');
         boton.className = `tab-btn ${nombre === tablaActual ? 'active' : ''}`;
         boton.dataset.tabla = nombre;
@@ -128,24 +118,24 @@ function pintarBotonesPestaña(listaTablas) {
 async function cambiarTabla(nombreTabla) {
     tablaActual = nombreTabla;
 
-    // Actualizar pestañas activas
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.tabla === nombreTabla);
     });
 
     try {
-        // Obtener datos
-        const { data, error } = await supabaseAdminPanel
-            .from(nombreTabla)
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(200);
+        let query = supabaseAdminPanel.from(nombreTabla).select('*').limit(200);
+        
+        const tablasConCreatedAt = ['pedidos', 'mascotas', 'clientes'];
+        if (tablasConCreatedAt.includes(nombreTabla)) {
+            query = query.order('created_at', { ascending: false });
+        }
+        
+        const { data, error } = await query;
 
         if (error) throw error;
 
         datosCache[nombreTabla] = data;
 
-        // Configurar columnas
         let columnas = configuracionColumnas[nombreTabla] || [];
         
         if (columnas.length === 0 && data && data.length > 0) {
@@ -157,12 +147,10 @@ async function cambiarTabla(nombreTabla) {
             }));
         }
 
-        // Destruir tabla anterior
         if (tablaInteractiva) {
             tablaInteractiva.destroy();
         }
 
-        // Crear nueva tabla
         tablaInteractiva = new Tabulator("#tabla-contenedor", {
             data: data || [],
             layout: "fitColumns",
@@ -182,10 +170,17 @@ async function cambiarTabla(nombreTabla) {
                     };
                     row.getElement().style.backgroundColor = colores[estado] || '';
                 }
+                
+                if (nombreTabla === 'profiles') {
+                    const role = row.getData().role;
+                    if (role === 'admin') {
+                        row.getElement().style.backgroundColor = '#1a1a2e';
+                        row.getElement().style.borderLeft = '3px solid #7b2ffc';
+                    }
+                }
             }
         });
 
-        // Auto-guardado al editar
         tablaInteractiva.on("cellEdited", async function(cell) {
             const filaDatos = cell.getRow().getData();
             const campo = cell.getField();
@@ -203,11 +198,11 @@ async function cambiarTabla(nombreTabla) {
                     .update({ [campo]: valor })
                     .eq('id', filaDatos.id);
 
-                if (updateError) {
-                    throw updateError;
-                }
+                if (updateError) throw updateError;
 
                 console.log(`✅ Actualizado: ${tablaActual}.${campo} = ${valor}`);
+                mostrarToast(`✅ ${campo} actualizado correctamente`);
+                
                 if (tablaActual === 'pedidos') actualizarEstadisticas();
                 
             } catch (err) {
@@ -222,8 +217,9 @@ async function cambiarTabla(nombreTabla) {
     } catch (err) {
         console.error("❌ Error cargando tabla:", err);
         document.getElementById('tabla-contenedor').innerHTML = 
-            `<div style="color: #ff4444; padding: 20px; text-align: center;">
-                ❌ Error al cargar "${nombreTabla}": ${err.message}
+            `<div style="color: #ff4444; padding: 20px; text-align: center; background: #1a0a0a; border-radius: 8px; border: 1px solid #ff4444;">
+                <h3>❌ Error al cargar "${nombreTabla}"</h3>
+                <p style="margin-top: 10px;">${err.message}</p>
             </div>`;
     }
 }
@@ -244,17 +240,22 @@ async function actualizarEstadisticas() {
             total: data.length
         };
 
-        document.getElementById('stat-pendientes').querySelector('.stat-number').textContent = stats.pendientes;
-        document.getElementById('stat-curso').querySelector('.stat-number').textContent = stats.enCurso;
-        document.getElementById('stat-completados').querySelector('.stat-number').textContent = stats.completados;
-        document.getElementById('stat-total').querySelector('.stat-number').textContent = stats.total;
+        const statPendientes = document.getElementById('stat-pendientes');
+        const statCurso = document.getElementById('stat-curso');
+        const statCompletados = document.getElementById('stat-completados');
+        const statTotal = document.getElementById('stat-total');
+        
+        if (statPendientes) statPendientes.querySelector('.stat-number').textContent = stats.pendientes;
+        if (statCurso) statCurso.querySelector('.stat-number').textContent = stats.enCurso;
+        if (statCompletados) statCompletados.querySelector('.stat-number').textContent = stats.completados;
+        if (statTotal) statTotal.querySelector('.stat-number').textContent = stats.total;
 
     } catch (err) {
         console.error("❌ Error actualizando estadísticas:", err);
     }
 }
 
-// Ejecutar SQL
+// Ejecutar SQL - CORREGIDO
 async function ejecutarSQL() {
     const query = document.getElementById("sql-query").value.trim();
     const errorBox = document.getElementById("sql-error");
@@ -272,14 +273,17 @@ async function ejecutarSQL() {
         const queryLower = query.toLowerCase().trim();
         
         if (queryLower.startsWith('select')) {
-            // Para SELECT, extraer tabla y ejecutar
             const match = queryLower.match(/from\s+([a-zA-Z0-9_]+)/);
             if (match) {
                 const tabla = match[1];
-                const { data, error } = await supabaseAdminPanel
-                    .from(tabla)
-                    .select('*')
-                    .limit(100);
+                let consulta = supabaseAdminPanel.from(tabla).select('*').limit(100);
+                
+                const tablasConCreatedAt = ['pedidos', 'mascotas', 'clientes'];
+                if (tablasConCreatedAt.includes(tabla)) {
+                    consulta = consulta.order('created_at', { ascending: false });
+                }
+                
+                const { data, error } = await consulta;
 
                 if (error) throw error;
 
@@ -301,23 +305,118 @@ async function ejecutarSQL() {
                         height: "300px"
                     });
                 } else {
-                    resultadoDiv.innerHTML = '<div style="color: #ffaa00; padding: 10px; background: #2a2a00; border-radius:4px;">✅ Sin resultados</div>';
+                    resultadoDiv.innerHTML = '<div style="color: #ffaa00; padding: 10px; background: #2a2a00; border-radius:4px;">✅ Consulta ejecutada. Sin resultados.</div>';
                 }
+            } else {
+                resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ No se pudo identificar la tabla en la consulta.</div>';
             }
-        } else if (queryLower.startsWith('insert') || queryLower.startsWith('update') || queryLower.startsWith('delete')) {
-            if (queryLower.startsWith('delete') && !confirm('⚠️ ¿Confirmas eliminar estos registros?')) return;
-
-            const { data, error } = await supabaseAdminPanel.rpc('exec_sql', { query: query });
-            
-            if (error) throw error;
-
-            resultadoDiv.innerHTML = `<div style="color: #00ff66; padding: 10px; background: #001500; border-radius:4px; border: 1px solid #00ff66;">
-                ✅ Operación ejecutada exitosamente.<br>
-                ${data ? '📊 Resultado: ' + JSON.stringify(data) : ''}
-            </div>`;
-
-            setTimeout(() => cambiarTabla(tablaActual), 1000);
-        } else {
+        } 
+        else if (queryLower.startsWith('insert')) {
+            const match = queryLower.match(/insert\s+into\s+([a-zA-Z0-9_]+)\s*\(([^)]+)\)\s*values\s*\(([^)]+)\)/i);
+            if (match) {
+                const tabla = match[1];
+                const columnas = match[2].split(',').map(c => c.trim());
+                const valores = match[3].split(',').map(v => v.trim().replace(/^['"]|['"]$/g, ''));
+                
+                const objeto = {};
+                columnas.forEach((col, i) => {
+                    let valor = valores[i] || null;
+                    if (valor && valor.toLowerCase() === 'null') valor = null;
+                    if (valor && !isNaN(valor) && valor !== '') valor = Number(valor);
+                    objeto[col] = valor;
+                });
+                
+                const { data, error } = await supabaseAdminPanel.from(tabla).insert([objeto]).select();
+                
+                if (error) throw error;
+                
+                resultadoDiv.innerHTML = `<div style="color: #00ff66; padding: 10px; background: #001500; border-radius:4px; border: 1px solid #00ff66;">
+                    ✅ INSERT ejecutado exitosamente en "${tabla}".<br>
+                    ${data ? '📊 Registro creado: ' + JSON.stringify(data[0]).substring(0, 200) : ''}
+                </div>`;
+                
+                setTimeout(() => cambiarTabla(tablaActual), 1000);
+            } else {
+                resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ Formato INSERT no reconocido.</div>';
+            }
+        }
+        else if (queryLower.startsWith('update')) {
+            const match = queryLower.match(/update\s+([a-zA-Z0-9_]+)\s+set\s+(.+?)\s+where\s+(.+)/i);
+            if (match) {
+                const tabla = match[1];
+                const setClause = match[2];
+                const whereClause = match[3];
+                
+                const sets = setClause.split(',').map(s => {
+                    const [col, val] = s.split('=').map(p => p.trim());
+                    let valor = val.replace(/^['"]|['"]$/g, '');
+                    if (valor.toLowerCase() === 'null') valor = null;
+                    return { col, valor };
+                });
+                
+                const whereMatch = whereClause.match(/([a-zA-Z0-9_]+)\s*=\s*['"]?([^'"]+)['"]?/);
+                
+                if (whereMatch) {
+                    const whereCol = whereMatch[1];
+                    const whereVal = whereMatch[2];
+                    
+                    const updateObj = {};
+                    sets.forEach(s => { updateObj[s.col] = s.valor; });
+                    
+                    const { data, error } = await supabaseAdminPanel
+                        .from(tabla)
+                        .update(updateObj)
+                        .eq(whereCol, whereVal)
+                        .select();
+                    
+                    if (error) throw error;
+                    
+                    resultadoDiv.innerHTML = `<div style="color: #00ff66; padding: 10px; background: #001500; border-radius:4px; border: 1px solid #00ff66;">
+                        ✅ UPDATE ejecutado exitosamente en "${tabla}".<br>
+                        ${data ? '📊 Registros actualizados: ' + data.length : ''}
+                    </div>`;
+                    
+                    setTimeout(() => cambiarTabla(tablaActual), 1000);
+                } else {
+                    resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ Cláusula WHERE no reconocida.</div>';
+                }
+            } else {
+                resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ Formato UPDATE no reconocido.</div>';
+            }
+        }
+        else if (queryLower.startsWith('delete')) {
+            const match = queryLower.match(/delete\s+from\s+([a-zA-Z0-9_]+)\s+where\s+(.+)/i);
+            if (match) {
+                if (!confirm('⚠️ ¿Confirmas eliminar estos registros? Esta acción no se puede deshacer.')) return;
+                
+                const tabla = match[1];
+                const whereClause = match[2];
+                const whereMatch = whereClause.match(/([a-zA-Z0-9_]+)\s*=\s*['"]?([^'"]+)['"]?/);
+                
+                if (whereMatch) {
+                    const whereCol = whereMatch[1];
+                    const whereVal = whereMatch[2];
+                    
+                    const { error } = await supabaseAdminPanel
+                        .from(tabla)
+                        .delete()
+                        .eq(whereCol, whereVal);
+                    
+                    if (error) throw error;
+                    
+                    resultadoDiv.innerHTML = `<div style="color: #00ff66; padding: 10px; background: #001500; border-radius:4px; border: 1px solid #00ff66;">
+                        ✅ DELETE ejecutado exitosamente en "${tabla}".
+                    </div>`;
+                    
+                    setTimeout(() => cambiarTabla(tablaActual), 1000);
+                } else {
+                    resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ Cláusula WHERE no reconocida.</div>';
+                }
+            } else {
+                resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ Formato DELETE no reconocido. Usa: DELETE FROM tabla WHERE campo = valor</div>';
+            }
+        }
+        else {
             resultadoDiv.innerHTML = '<div style="color: #ff6600; padding: 10px; background: #2a1a00; border-radius:4px;">⚠️ Solo SELECT, INSERT, UPDATE, DELETE</div>';
         }
     } catch (err) {
@@ -340,15 +439,19 @@ function limpiarSQL() {
 
 function insertarEjemploSQL() {
     const ejemplos = {
-        pedidos: `INSERT INTO pedidos (nro_lote, cliente_id, mascota_id, sabor, periodo_porcion, cantidad_gramos, metodo_pago, fecha_entrega, monto_total, estado)
-VALUES ('LOT-001', 'ID_DEL_CLIENTE', 'ID_DE_LA_MASCOTA', 'Carne', 'Semanal', 500, 'Efectivo', '2024-12-25', 25.00, 'Pendiente');`,
+        pedidos: `INSERT INTO pedidos (nro_lote, cliente_id, mascota_id, sabor, periodo_porcion, cantidad_gramos, metodo_pago, fecha_entrega, monto_total)
+VALUES ('LOT-001', 'ID_DEL_CLIENTE', 'ID_DE_LA_MASCOTA', 'Carne', 'Semanal', 500, 'Efectivo', '2024-12-25', 25.00);`,
+        
         mascotas: `INSERT INTO mascotas (cliente_id, nombre, tipo, edad_anios, edad_meses, peso_kg, sexo, raza, actividad_fisica)
 VALUES ('ID_DEL_CLIENTE', 'Rocky', 'Perro', 3, 6, 15.5, 'Macho', 'Labrador', 'Alta');`,
+        
         clientes: `INSERT INTO clientes (id, nombre_propietario, email, telefono, direccion)
-VALUES (gen_random_uuid(), 'María García', 'maria@email.com', '+58 412 1234567', 'Calle Principal #123');`
+VALUES (gen_random_uuid(), 'Maria Garcia', 'maria@email.com', '+58 412 1234567', 'Calle Principal #123');`,
+        
+        profiles: `UPDATE profiles SET role = 'admin' WHERE email = 'correo@ejemplo.com';`
     };
     
-    const ejemplo = ejemplos[tablaActual] || 'SELECT * FROM ' + tablaActual + ' LIMIT 10;';
+    const ejemplo = ejemplos[tablaActual] || `SELECT * FROM ${tablaActual} LIMIT 10;`;
     document.getElementById("sql-query").value = ejemplo;
 }
 
@@ -362,8 +465,7 @@ async function crearRegistroRapido(tabla) {
             cantidad_gramos: 500,
             metodo_pago: 'Efectivo',
             fecha_entrega: new Date().toISOString().split('T')[0],
-            monto_total: 25.00,
-            estado: 'Pendiente'
+            monto_total: 25.00
         },
         mascotas: {
             nombre: 'Nueva Mascota',
@@ -377,13 +479,17 @@ async function crearRegistroRapido(tabla) {
         clientes: {
             nombre_propietario: 'Nuevo Cliente',
             email: 'cliente@email.com',
-            telefono: '+58 412 0000000'
+            telefono: '+58 412 0000000',
+            rol: 'cliente'
+        },
+        profiles: {
+            role: 'user'
         }
     };
 
     const datos = datosPorDefecto[tabla];
     if (!datos) {
-        alert('Tabla no soportada para creación rápida');
+        alert('Tabla no soportada para creación rápida. Usa la consola SQL.');
         return;
     }
 
@@ -395,7 +501,7 @@ async function crearRegistroRapido(tabla) {
 
         if (error) throw error;
 
-        alert(`✅ Registro creado en "${tabla}"`);
+        mostrarToast(`✅ Registro creado en "${tabla}"`);
         cambiarTabla(tabla);
     } catch (err) {
         alert('❌ Error: ' + err.message);
@@ -411,6 +517,27 @@ function exportarTablaActual() {
     }
 }
 
+// Toast personalizado
+function mostrarToast(mensaje) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background: #00ff66;
+        color: #000;
+        padding: 12px 20px;
+        border-radius: 8px;
+        font-weight: bold;
+        z-index: 9999;
+        animation: fadeIn 0.3s;
+        box-shadow: 0 4px 15px rgba(0,255,102,0.3);
+    `;
+    toast.textContent = mensaje;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 2000);
+}
+
 // Exponer funciones globales
 window.cambiarTabla = cambiarTabla;
 window.ejecutarSQL = ejecutarSQL;
@@ -419,3 +546,5 @@ window.insertarEjemploSQL = insertarEjemploSQL;
 window.crearRegistroRapido = crearRegistroRapido;
 window.exportarTablaActual = exportarTablaActual;
 window.actualizarEstadisticas = actualizarEstadisticas;
+
+console.log('✅ Gestor Admin DB cargado');
