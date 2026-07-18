@@ -914,57 +914,50 @@
     }
 }
 
-        async function deleteRegistro(id) {
-            if (!confirm('¿Eliminar este registro?')) return;
-            
-            showLoading(true);
-            
-            try {
-                const { data: ped, error } = await sbAdmin
-                    .from('pedidos')
-                    .select('mascota_id, cliente_id')
-                    .eq('id', id)
-                    .single();
-                    
-                if (error || !ped) {
-                    console.error('❌ Pedido no encontrado:', error);
-                    toast('Pedido no encontrado', 'error');
-                    showLoading(false);
-                    return;
-                }
-                
-                await sbAdmin.from('pedidos').delete().eq('id', id);
-                
-                const { data: other } = await sbAdmin
-                    .from('pedidos')
-                    .select('id')
-                    .eq('mascota_id', ped.mascota_id);
-                    
-                if (!other || other.length === 0) {
-                    await sbAdmin.from('mascotas').delete().eq('id', ped.mascota_id);
-                    
-                    const { data: otrasMascotas } = await sbAdmin
-                        .from('mascotas')
-                        .select('id')
-                        .eq('cliente_id', ped.cliente_id);
-                        
-                    if (!otrasMascotas || otrasMascotas.length === 0) {
-                        await sbAdmin.from('clientes').delete().eq('id', ped.cliente_id);
-                    }
-                }
-                
-                toast('✅ Registro eliminado');
-                await loadAdminData();
-                render();
-                
-                showLoading(false);
-                
-            } catch (err) {
-                console.error('❌ Error en deleteRegistro:', err);
-                toast('Error al eliminar: ' + err.message, 'error');
-                showLoading(false);
-            }
+       async function deleteRegistro(id) {
+    // Usar confirm personalizado
+    const confirmar = confirm('⚠️ ¿Eliminar este pedido permanentemente?\n\nEsta acción no se puede deshacer.');
+    
+    if (!confirmar) {
+        return;
+    }
+    
+    showLoading(true);
+    console.log('🗑️ Eliminando pedido:', id);
+    
+    try {
+        // Usar RPC para eliminar de forma segura
+        const { data, error } = await sbAdmin.rpc('eliminar_pedido_completo', {
+            p_pedido_id: id
+        });
+        
+        if (error) {
+            console.error('❌ Error eliminando pedido:', error);
+            toast('Error al eliminar: ' + error.message, 'error');
+            showLoading(false);
+            return;
         }
+        
+        console.log('✅ Pedido eliminado:', data);
+        
+        // Recargar datos
+        await loadAdminData();
+        
+        if (state.tab === 'reportes') {
+            await loadReporte();
+        }
+        
+        render();
+        toast(`✅ Pedido eliminado correctamente`, 'success');
+        
+        showLoading(false);
+        
+    } catch (err) {
+        console.error('❌ Error en deleteRegistro:', err);
+        toast('Error al eliminar: ' + err.message, 'error');
+        showLoading(false);
+    }
+}
 
         // ═══════════════════════════════════════════════════════════════════
         //  RENDER
@@ -1275,7 +1268,7 @@
                                 ${estado === ESTADOS.PROCESO ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();updateOrderStatus('${r.id}','${ESTADOS.COMPLETADO}')">✅ Completar</button>` : ''}
                                 ${estado === ESTADOS.COMPLETADO ? `<span style="font-size:0.7rem;color:var(--green-700)">✅ Completado</span>` : ''}
                             </div>
-                            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteRegistro('${r.id}')">🗑️</button>
+                            <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();event.preventDefault();deleteRegistro('${r.id}')">🗑️</button>
                             <span style="font-size:0.7rem;color:var(--gray-400)">${isOpen?'▲':'▼'}</span>
                         </div>
                         <div class="sale-row-detail ${isOpen?'open':''}">
