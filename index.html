@@ -783,71 +783,46 @@
         }
 
         async function deletePet(id) {
-            if (!confirm('⚠️ ¿Eliminar esta mascota y todos sus pedidos asociados?')) {
-                return;
-            }
-            
-            showLoading(true);
-            console.log('🗑️ Eliminando mascota:', id);
-            
-            try {
-                const { data: mascota, error: mascotaCheck } = await sbAdmin
-                    .from('mascotas')
-                    .select('id, nombre')
-                    .eq('id', id)
-                    .single();
-                    
-                if (mascotaCheck || !mascota) {
-                    console.error('❌ Mascota no encontrada:', mascotaCheck);
-                    toast('Mascota no encontrada', 'error');
-                    showLoading(false);
-                    return;
-                }
-                
-                const { error: pedidosErr } = await sbAdmin
-                    .from('pedidos')
-                    .delete()
-                    .eq('mascota_id', id);
-                    
-                if (pedidosErr) {
-                    console.error('❌ Error eliminando pedidos:', pedidosErr);
-                    toast('Error eliminando pedidos: ' + pedidosErr.message, 'error');
-                    showLoading(false);
-                    return;
-                }
-                
-                const { error: mascotaErr } = await sbAdmin
-                    .from('mascotas')
-                    .delete()
-                    .eq('id', id);
-                    
-                if (mascotaErr) {
-                    console.error('❌ Error eliminando mascota:', mascotaErr);
-                    toast('Error eliminando mascota: ' + mascotaErr.message, 'error');
-                    showLoading(false);
-                    return;
-                }
-                
-                console.log('✅ Mascota y pedidos eliminados correctamente');
-                
-                state.mascotas = state.mascotas.filter(m => m.id !== id);
-                state.pedidos = state.pedidos.filter(p => p.mascota_id !== id);
-                
-                if (state.tab === 'pedir') {
-                    await loadClienteData();
-                }
-                
-                render();
-                toast(`✅ Mascota "${mascota.nombre}" eliminada correctamente`, 'success');
-                
-                showLoading(false);
-                
-            } catch (err) {
-                console.error('❌ Error en deletePet:', err);
-                toast('Error al eliminar: ' + err.message, 'error');
-                showLoading(false);
-            }
+    if (!confirm('⚠️ ¿Eliminar esta mascota y todos sus pedidos asociados?')) {
+        return;
+    }
+    
+    showLoading(true);
+    console.log('🗑️ Eliminando mascota:', id);
+    
+    try {
+        // Usar la función RPC para eliminar todo de una vez
+        const { data, error } = await sbAdmin.rpc('eliminar_mascota_completa', {
+            p_mascota_id: id
+        });
+        
+        if (error) {
+            console.error('❌ Error eliminando mascota:', error);
+            toast('Error al eliminar: ' + error.message, 'error');
+            showLoading(false);
+            return;
         }
+        
+        console.log('✅ Mascota eliminada:', data);
+        
+        // Recargar datos
+        await loadClienteData();
+        
+        if (state.view === 'admin') {
+            await loadAdminData();
+        }
+        
+        render();
+        toast(`✅ Mascota "${data?.nombre || ''}" eliminada correctamente`, 'success');
+        
+        showLoading(false);
+        
+    } catch (err) {
+        console.error('❌ Error en deletePet:', err);
+        toast('Error al eliminar: ' + err.message, 'error');
+        showLoading(false);
+    }
+}
 
         async function placeOrder(form) {
     showLoading(true);
@@ -1073,41 +1048,48 @@
             return '';
         }
 
-        function renderPedidoForm() {
-            if (state.mascotas.length === 0) return `
-                <div class="card"><div class="card-body">
-                    <div class="empty-state"><div class="icon-big">🐕</div><h3>Primero registra tu mascota</h3>
-                    <p style="margin-bottom:1rem">Necesitas al menos una mascota para hacer un pedido</p>
-                    <button class="btn btn-outline" onclick="state.tab='mascotas';render()">🐾 Ir a Mis Mascotas</button></div>
-                </div></div>`;
-            
-            const petOpts = state.mascotas.map(m => `<option value="${m.id}">${m.nombre} (${m.tipo} - ${m.raza||'Sin raza'} - ${m.peso_kg}kg)</option>`).join('');
-            
-            return `
-            <div class="card">
-                <div class="card-header"><h2>🛒 Nuevo Pedido</h2><p>Selecciona tu mascota y elige la comida</p></div>
-                <div class="card-body">
-                    <form id="order-form">
-                        <div class="form-group"><label>🐕 Mascota *</label><select name="mascota_id" class="form-control" required><option value="">Selecciona tu mascota</option>${petOpts}</select></div>
-                        <div class="form-row form-row-3">
-                            <div class="form-group"><label>🍖 Sabor *</label><select name="sabor" class="form-control"><option>Carne</option><option>Pollo</option><option>Mixta</option><option>Personalizada</option></select></div>
-                            <div class="form-group"><label>📦 Porción *</label><select name="periodo_porcion" class="form-control"><option>Diaria</option><option>Semanal</option><option>Mensual</option></select></div>
-                            <div class="form-group"><label>⚖️ Gramos *</label><input type="number" name="cantidad_gramos" class="form-control" min="1" placeholder="Ej: 500" required></div>
-                        </div>
-                        <div class="form-row form-row-3">
-                            <div class="form-group"><label>💳 Pago *</label><select name="metodo_pago" class="form-control" required><option value="">Seleccionar</option><option>Efectivo</option><option>Transferencia</option><option>Tarjeta</option></select></div>
-                            <div class="form-group"><label>📅 Entrega *</label><input type="date" name="fecha_entrega" class="form-control" required></div>
-                            <div class="form-group"><label>🔢 Nro. Lote *</label><input name="nro_lote" class="form-control" placeholder="Ej: LOT-001" required></div>
-                        </div>
-                        <div class="form-group"><label>💰 Monto Total ($) *</label><input type="number" step="0.01" name="monto_total" class="form-control" style="max-width:200px" min="0" placeholder="0.00" required></div>
-                        <div class="form-group" style="background:var(--gray-50);padding:0.5rem 1rem;border-radius:var(--radius);font-size:0.85rem;color:var(--gray-500)">
-                            ⏳ El pedido se creará con estado <strong>Pendiente</strong>
-                        </div>
-                        <button type="submit" class="btn btn-primary">✅ Realizar Pedido</button>
-                    </form>
+       function renderPedidoForm() {
+    if (state.mascotas.length === 0) return `
+        <div class="card"><div class="card-body">
+            <div class="empty-state"><div class="icon-big">🐕</div><h3>Primero registra tu mascota</h3>
+            <p style="margin-bottom:1rem">Necesitas al menos una mascota para hacer un pedido</p>
+            <button class="btn btn-outline" onclick="state.tab='mascotas';render()">🐾 Ir a Mis Mascotas</button></div>
+        </div></div>`;
+    
+    const petOpts = state.mascotas.map(m => `<option value="${m.id}">${m.nombre} (${m.tipo} - ${m.raza||'Sin raza'} - ${m.peso_kg}kg)</option>`).join('');
+    
+    return `
+    <div class="card">
+        <div class="card-header"><h2>🛒 Nuevo Pedido</h2><p>Selecciona tu mascota y elige la comida</p></div>
+        <div class="card-body">
+            <form id="order-form">
+                <div class="form-group"><label>🐕 Mascota *</label><select name="mascota_id" class="form-control" required><option value="">Selecciona tu mascota</option>${petOpts}</select></div>
+                <div class="form-row form-row-3">
+                    <div class="form-group"><label>🍖 Sabor *</label><select name="sabor" class="form-control"><option>Carne</option><option>Pollo</option><option>Mixta</option><option>Personalizada</option></select></div>
+                    <div class="form-group"><label>📦 Porción *</label><select name="periodo_porcion" class="form-control"><option>Diaria</option><option>Semanal</option><option>Mensual</option></select></div>
+                    <div class="form-group"><label>⚖️ Gramos *</label><input type="number" name="cantidad_gramos" class="form-control" min="1" placeholder="Ej: 500" required></div>
                 </div>
-            </div>`;
-        }
+                <div class="form-row form-row-3">
+                    <div class="form-group"><label>💳 Pago *</label><select name="metodo_pago" class="form-control" required>
+                        <option value="">Seleccionar</option>
+                        <option>Efectivo</option>
+                        <option>Transferencia</option>
+                        <option>Tarjeta</option>
+                        <option>Pago Móvil</option>
+                        <option>Divisas</option>
+                    </select></div>
+                    <div class="form-group"><label>📅 Entrega *</label><input type="date" name="fecha_entrega" class="form-control" required></div>
+                    <div class="form-group"><label>🔢 Nro. Lote *</label><input name="nro_lote" class="form-control" placeholder="Ej: LOT-001" required></div>
+                </div>
+                <div class="form-group"><label>💰 Monto Total ($) *</label><input type="number" step="0.01" name="monto_total" class="form-control" style="max-width:200px" min="0" placeholder="0.00" required></div>
+                <div class="form-group" style="background:var(--gray-50);padding:0.5rem 1rem;border-radius:var(--radius);font-size:0.85rem;color:var(--gray-500)">
+                    ⏳ El pedido se creará con estado <strong>Pendiente</strong>
+                </div>
+                <button type="submit" class="btn btn-primary">✅ Realizar Pedido</button>
+            </form>
+        </div>
+    </div>`;
+}
 
         function renderMascotas() {
             let html = `<div class="card"><div class="card-header"><div><h2>🐾 Mis Mascotas</h2><p>${state.mascotas.length} registrada${state.mascotas.length!==1?'s':''}</p></div><button class="btn btn-primary btn-sm" id="btn-add-pet">➕ Agregar</button></div><div class="card-body">`;
