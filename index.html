@@ -167,6 +167,11 @@
         .stat-item.progress .stat-value{color:var(--blue-700)}
         .stat-item.completed .stat-value{color:var(--green-700)}
         .stat-item.total .stat-value{color:var(--emerald-700)}
+        .precio-row{background:var(--gray-50);border-radius:0.5rem;padding:0.75rem;margin-bottom:0.5rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:0.5rem}
+        .precio-row .info{display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center}
+        .precio-row .acciones{display:flex;gap:0.3rem}
+        .precio-calculado{font-size:0.8rem;color:var(--gray-500);margin-top:0.25rem}
+        .precio-calculado .valor{font-weight:700;color:var(--emerald-600);font-size:1rem}
     </style>
 </head>
 <body>
@@ -221,7 +226,9 @@
             expandedId: null,
             expandedDay: null,
             loading: false,
-            statusFilter: 'todos'
+            statusFilter: 'todos',
+            preciosConfig: [],
+            showPrecioForm: false
         };
 
         // Estados posibles
@@ -323,6 +330,7 @@
                     if (state.role === 'admin') {
                         state.tab = 'ventas';
                         await loadAdminData();
+                        state.preciosConfig = await loadPreciosConfig();
                     } else {
                         state.tab = 'pedir';
                         await loadClienteData();
@@ -349,6 +357,7 @@
                 if (state.role === 'admin') {
                     state.tab = 'ventas';
                     await loadAdminData();
+                    state.preciosConfig = await loadPreciosConfig();
                 } else {
                     state.tab = 'pedir';
                     await loadClienteData();
@@ -362,6 +371,7 @@
                 state.tab = 'pedir';
                 state.mascotas = [];
                 state.pedidos = [];
+                state.preciosConfig = [];
                 console.log('👋 Sesión cerrada');
             }
             
@@ -412,6 +422,7 @@
                     state.view = 'admin';
                     state.tab = 'ventas';
                     await loadAdminData();
+                    state.preciosConfig = await loadPreciosConfig();
                 } else {
                     state.view = 'cliente';
                     state.tab = 'pedir';
@@ -517,6 +528,7 @@
             state.tab = 'pedir';
             state.mascotas = [];
             state.pedidos = [];
+            state.preciosConfig = [];
             state.user = null;
             state.role = null;
             render();
@@ -637,7 +649,6 @@
                     state.allPedidos = [];
                 } else {
                     state.allPedidos = data || [];
-                    // Asegurar que todos los pedidos tengan un estado
                     state.allPedidos.forEach(p => {
                         if (!p.estado) {
                             p.estado = ESTADOS.PENDIENTE;
@@ -654,7 +665,6 @@
 
         async function loadReporte() {
             try {
-                // Solo contar pedidos COMPLETADOS para el reporte de ventas
                 let q = sbAdmin
                     .from('pedidos')
                     .select(`
@@ -706,6 +716,115 @@
                 console.error('❌ Error en loadReporte:', err);
                 state.reporte = [];
                 state.resumen = { total_general: 0, total_pedidos: 0, total_dias: 0 };
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  API - PRECIOS
+        // ═══════════════════════════════════════════════════════════════════
+        async function loadPreciosConfig() {
+            try {
+                const { data, error } = await sbAdmin
+                    .from('config_precios')
+                    .select('*')
+                    .order('sabor')
+                    .order('periodo_porcion')
+                    .order('gramos_min');
+                
+                if (error) {
+                    console.error('❌ Error cargando precios:', error);
+                    return [];
+                }
+                
+                return data || [];
+            } catch (err) {
+                console.error('❌ Error en loadPreciosConfig:', err);
+                return [];
+            }
+        }
+
+        async function savePrecioConfig(data) {
+            showLoading(true);
+            
+            try {
+                const { error } = await sbAdmin
+                    .from('config_precios')
+                    .upsert([data], { 
+                        onConflict: 'sabor,periodo_porcion,gramos_min,gramos_max',
+                        ignoreDuplicates: false 
+                    });
+                
+                if (error) {
+                    console.error('❌ Error guardando precio:', error);
+                    toast('Error al guardar precio: ' + error.message, 'error');
+                    showLoading(false);
+                    return false;
+                }
+                
+                toast('✅ Precio guardado correctamente', 'success');
+                state.preciosConfig = await loadPreciosConfig();
+                state.showPrecioForm = false;
+                render();
+                showLoading(false);
+                return true;
+                
+            } catch (err) {
+                console.error('❌ Error en savePrecioConfig:', err);
+                toast('Error al guardar: ' + err.message, 'error');
+                showLoading(false);
+                return false;
+            }
+        }
+
+        async function deletePrecioConfig(id) {
+            if (!confirm('⚠️ ¿Eliminar esta configuración de precio?')) {
+                return;
+            }
+            
+            showLoading(true);
+            
+            try {
+                const { error } = await sbAdmin
+                    .from('config_precios')
+                    .delete()
+                    .eq('id', id);
+                
+                if (error) {
+                    console.error('❌ Error eliminando precio:', error);
+                    toast('Error al eliminar: ' + error.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                toast('✅ Configuración eliminada', 'success');
+                state.preciosConfig = await loadPreciosConfig();
+                render();
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en deletePrecioConfig:', err);
+                toast('Error al eliminar: ' + err.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        async function calcularPrecio(sabor, periodoPorcion, cantidadGramos) {
+            try {
+                const { data, error } = await sbAdmin.rpc('calcular_precio_pedido', {
+                    p_sabor: sabor,
+                    p_periodo_porcion: periodoPorcion,
+                    p_cantidad_gramos: parseInt(cantidadGramos) || 0
+                });
+                
+                if (error) {
+                    console.error('❌ Error calculando precio:', error);
+                    return 0;
+                }
+                
+                return data || 0;
+            } catch (err) {
+                console.error('❌ Error en calcularPrecio:', err);
+                return 0;
             }
         }
 
@@ -783,181 +902,173 @@
         }
 
         async function deletePet(id) {
-    if (!confirm('⚠️ ¿Eliminar esta mascota y todos sus pedidos asociados?')) {
-        return;
-    }
-    
-    showLoading(true);
-    console.log('🗑️ Eliminando mascota:', id);
-    
-    try {
-        // Usar la función RPC para eliminar todo de una vez
-        const { data, error } = await sbAdmin.rpc('eliminar_mascota_completa', {
-            p_mascota_id: id
-        });
-        
-        if (error) {
-            console.error('❌ Error eliminando mascota:', error);
-            toast('Error al eliminar: ' + error.message, 'error');
-            showLoading(false);
-            return;
+            if (!confirm('⚠️ ¿Eliminar esta mascota y todos sus pedidos asociados?')) {
+                return;
+            }
+            
+            showLoading(true);
+            console.log('🗑️ Eliminando mascota:', id);
+            
+            try {
+                const { data, error } = await sbAdmin.rpc('eliminar_mascota_completa', {
+                    p_mascota_id: id
+                });
+                
+                if (error) {
+                    console.error('❌ Error eliminando mascota:', error);
+                    toast('Error al eliminar: ' + error.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                console.log('✅ Mascota eliminada:', data);
+                
+                await loadClienteData();
+                
+                if (state.view === 'admin') {
+                    await loadAdminData();
+                }
+                
+                render();
+                toast(`✅ Mascota "${data?.nombre || ''}" eliminada correctamente`, 'success');
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en deletePet:', err);
+                toast('Error al eliminar: ' + err.message, 'error');
+                showLoading(false);
+            }
         }
-        
-        console.log('✅ Mascota eliminada:', data);
-        
-        // Recargar datos
-        await loadClienteData();
-        
-        if (state.view === 'admin') {
-            await loadAdminData();
-        }
-        
-        render();
-        toast(`✅ Mascota "${data?.nombre || ''}" eliminada correctamente`, 'success');
-        
-        showLoading(false);
-        
-    } catch (err) {
-        console.error('❌ Error en deletePet:', err);
-        toast('Error al eliminar: ' + err.message, 'error');
-        showLoading(false);
-    }
-}
 
         async function placeOrder(form) {
-    showLoading(true);
-    
-    try {
-        const pedidoData = {
-            cliente_id: state.user.id,
-            mascota_id: form.mascota_id,
-            sabor: form.sabor,
-            periodo_porcion: form.periodo_porcion,
-            cantidad_gramos: parseInt(form.cantidad_gramos) || 0,
-            metodo_pago: form.metodo_pago,
-            fecha_entrega: form.fecha_entrega,
-            nro_lote: form.nro_lote,
-            monto_total: parseFloat(form.monto_total) || 0,
-            estado: 'pendiente' // Usar string literal, el tipo ENUM lo convierte
-        };
-        
-        console.log('📝 Creando pedido:', pedidoData);
-        
-        const { data, error } = await sbAdmin
-            .from('pedidos')
-            .insert([pedidoData])
-            .select();
+            showLoading(true);
             
-        if (error) {
-            console.error('❌ Error creando pedido:', error);
-            toast(error.message, 'error');
-            showLoading(false);
-            return;
+            try {
+                const pedidoData = {
+                    cliente_id: state.user.id,
+                    mascota_id: form.mascota_id,
+                    sabor: form.sabor,
+                    periodo_porcion: form.periodo_porcion,
+                    cantidad_gramos: parseInt(form.cantidad_gramos) || 0,
+                    metodo_pago: form.metodo_pago,
+                    fecha_entrega: form.fecha_entrega,
+                    nro_lote: form.nro_lote,
+                    monto_total: parseFloat(form.monto_total) || 0,
+                    estado: 'pendiente'
+                };
+                
+                console.log('📝 Creando pedido:', pedidoData);
+                
+                const { data, error } = await sbAdmin
+                    .from('pedidos')
+                    .insert([pedidoData])
+                    .select();
+                    
+                if (error) {
+                    console.error('❌ Error creando pedido:', error);
+                    toast(error.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                console.log('✅ Pedido creado:', data);
+                toast('✅ Pedido realizado exitosamente (Estado: Pendiente)');
+                state.tab = 'historial';
+                await loadClienteData();
+                render();
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en placeOrder:', err);
+                toast('Error al realizar pedido: ' + err.message, 'error');
+                showLoading(false);
+            }
         }
-        
-        console.log('✅ Pedido creado:', data);
-        toast('✅ Pedido realizado exitosamente (Estado: Pendiente)');
-        state.tab = 'historial';
-        await loadClienteData();
-        render();
-        
-        showLoading(false);
-        
-    } catch (err) {
-        console.error('❌ Error en placeOrder:', err);
-        toast('Error al realizar pedido: ' + err.message, 'error');
-        showLoading(false);
-    }
-}
 
-        // ⭐ FUNCIÓN CORREGIDA - Actualizar estado de un pedido
         async function updateOrderStatus(orderId, nuevoEstado) {
-    showLoading(true);
-    
-    try {
-        console.log(`📝 Intentando actualizar pedido ${orderId} a estado: ${nuevoEstado}`);
-        
-        // Usar la función RPC en lugar de update directo
-        const { data, error } = await sbAdmin.rpc('actualizar_estado_pedido', {
-            p_pedido_id: orderId,
-            p_nuevo_estado: nuevoEstado
-        });
-        
-        if (error) {
-            console.error('❌ Error actualizando estado:', error);
-            toast('Error al actualizar estado: ' + error.message, 'error');
-            showLoading(false);
-            return;
+            showLoading(true);
+            
+            try {
+                console.log(`📝 Intentando actualizar pedido ${orderId} a estado: ${nuevoEstado}`);
+                
+                const { data, error } = await sbAdmin.rpc('actualizar_estado_pedido', {
+                    p_pedido_id: orderId,
+                    p_nuevo_estado: nuevoEstado
+                });
+                
+                if (error) {
+                    console.error('❌ Error actualizando estado:', error);
+                    toast('Error al actualizar estado: ' + error.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                console.log('✅ Estado actualizado:', data);
+                
+                await loadAdminData();
+                
+                if (state.tab === 'reportes') {
+                    await loadReporte();
+                }
+                
+                const estadoLabel = nuevoEstado === ESTADOS.PENDIENTE ? 'Pendiente' :
+                                   nuevoEstado === ESTADOS.PROCESO ? 'En Proceso' : 'Completado';
+                
+                toast(`✅ Estado actualizado a: ${estadoLabel}`, 'success');
+                render();
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en updateOrderStatus:', err);
+                toast('Error al actualizar estado: ' + err.message, 'error');
+                showLoading(false);
+            }
         }
-        
-        console.log('✅ Estado actualizado:', data);
-        
-        // Recargar datos
-        await loadAdminData();
-        
-        if (state.tab === 'reportes') {
-            await loadReporte();
-        }
-        
-        const estadoLabel = nuevoEstado === ESTADOS.PENDIENTE ? 'Pendiente' :
-                           nuevoEstado === ESTADOS.PROCESO ? 'En Proceso' : 'Completado';
-        
-        toast(`✅ Estado actualizado a: ${estadoLabel}`, 'success');
-        render();
-        
-        showLoading(false);
-        
-    } catch (err) {
-        console.error('❌ Error en updateOrderStatus:', err);
-        toast('Error al actualizar estado: ' + err.message, 'error');
-        showLoading(false);
-    }
-}
 
-       async function deleteRegistro(id) {
-    // Usar confirm personalizado
-    const confirmar = confirm('⚠️ ¿Eliminar este pedido permanentemente?\n\nEsta acción no se puede deshacer.');
-    
-    if (!confirmar) {
-        return;
-    }
-    
-    showLoading(true);
-    console.log('🗑️ Eliminando pedido:', id);
-    
-    try {
-        // Usar RPC para eliminar de forma segura
-        const { data, error } = await sbAdmin.rpc('eliminar_pedido_completo', {
-            p_pedido_id: id
-        });
-        
-        if (error) {
-            console.error('❌ Error eliminando pedido:', error);
-            toast('Error al eliminar: ' + error.message, 'error');
-            showLoading(false);
-            return;
+        async function deleteRegistro(id) {
+            const confirmar = confirm('⚠️ ¿Eliminar este pedido permanentemente?\n\nEsta acción no se puede deshacer.');
+            
+            if (!confirmar) {
+                return;
+            }
+            
+            showLoading(true);
+            console.log('🗑️ Eliminando pedido:', id);
+            
+            try {
+                const { data, error } = await sbAdmin.rpc('eliminar_pedido_completo', {
+                    p_pedido_id: id
+                });
+                
+                if (error) {
+                    console.error('❌ Error eliminando pedido:', error);
+                    toast('Error al eliminar: ' + error.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                console.log('✅ Pedido eliminado:', data);
+                
+                await loadAdminData();
+                
+                if (state.tab === 'reportes') {
+                    await loadReporte();
+                }
+                
+                render();
+                toast(`✅ Pedido eliminado correctamente`, 'success');
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en deleteRegistro:', err);
+                toast('Error al eliminar: ' + err.message, 'error');
+                showLoading(false);
+            }
         }
-        
-        console.log('✅ Pedido eliminado:', data);
-        
-        // Recargar datos
-        await loadAdminData();
-        
-        if (state.tab === 'reportes') {
-            await loadReporte();
-        }
-        
-        render();
-        toast(`✅ Pedido eliminado correctamente`, 'success');
-        
-        showLoading(false);
-        
-    } catch (err) {
-        console.error('❌ Error en deleteRegistro:', err);
-        toast('Error al eliminar: ' + err.message, 'error');
-        showLoading(false);
-    }
-}
 
         // ═══════════════════════════════════════════════════════════════════
         //  RENDER
@@ -1041,48 +1152,77 @@
             return '';
         }
 
-       function renderPedidoForm() {
-    if (state.mascotas.length === 0) return `
-        <div class="card"><div class="card-body">
-            <div class="empty-state"><div class="icon-big">🐕</div><h3>Primero registra tu mascota</h3>
-            <p style="margin-bottom:1rem">Necesitas al menos una mascota para hacer un pedido</p>
-            <button class="btn btn-outline" onclick="state.tab='mascotas';render()">🐾 Ir a Mis Mascotas</button></div>
-        </div></div>`;
-    
-    const petOpts = state.mascotas.map(m => `<option value="${m.id}">${m.nombre} (${m.tipo} - ${m.raza||'Sin raza'} - ${m.peso_kg}kg)</option>`).join('');
-    
-    return `
-    <div class="card">
-        <div class="card-header"><h2>🛒 Nuevo Pedido</h2><p>Selecciona tu mascota y elige la comida</p></div>
-        <div class="card-body">
-            <form id="order-form">
-                <div class="form-group"><label>🐕 Mascota *</label><select name="mascota_id" class="form-control" required><option value="">Selecciona tu mascota</option>${petOpts}</select></div>
-                <div class="form-row form-row-3">
-                    <div class="form-group"><label>🍖 Sabor *</label><select name="sabor" class="form-control"><option>Carne</option><option>Pollo</option><option>Mixta</option><option>Personalizada</option></select></div>
-                    <div class="form-group"><label>📦 Porción *</label><select name="periodo_porcion" class="form-control"><option>Diaria</option><option>Semanal</option><option>Mensual</option></select></div>
-                    <div class="form-group"><label>⚖️ Gramos *</label><input type="number" name="cantidad_gramos" class="form-control" min="1" placeholder="Ej: 500" required></div>
+        function renderPedidoForm() {
+            if (state.mascotas.length === 0) return `
+                <div class="card"><div class="card-body">
+                    <div class="empty-state"><div class="icon-big">🐕</div><h3>Primero registra tu mascota</h3>
+                    <p style="margin-bottom:1rem">Necesitas al menos una mascota para hacer un pedido</p>
+                    <button class="btn btn-outline" onclick="state.tab='mascotas';render()">🐾 Ir a Mis Mascotas</button></div>
+                </div></div>`;
+            
+            const petOpts = state.mascotas.map(m => `<option value="${m.id}">${m.nombre} (${m.tipo} - ${m.raza||'Sin raza'} - ${m.peso_kg}kg)</option>`).join('');
+            
+            return `
+            <div class="card">
+                <div class="card-header"><h2>🛒 Nuevo Pedido</h2><p>Selecciona tu mascota y elige la comida</p></div>
+                <div class="card-body">
+                    <form id="order-form">
+                        <div class="form-group"><label>🐕 Mascota *</label><select name="mascota_id" class="form-control" required><option value="">Selecciona tu mascota</option>${petOpts}</select></div>
+                        <div class="form-row form-row-3">
+                            <div class="form-group"><label>🍖 Sabor *</label>
+                                <select name="sabor" class="form-control" id="sabor-select" required>
+                                    <option value="">Seleccionar</option>
+                                    <option>Carne</option>
+                                    <option>Pollo</option>
+                                    <option>Mixta</option>
+                                    <option>Personalizada</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>📦 Porción *</label>
+                                <select name="periodo_porcion" class="form-control" id="periodo-select" required>
+                                    <option value="">Seleccionar</option>
+                                    <option>Diaria</option>
+                                    <option>Semanal</option>
+                                    <option>Mensual</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>⚖️ Gramos *</label>
+                                <input type="number" name="cantidad_gramos" class="form-control" id="gramos-input" min="1" placeholder="Ej: 500" required>
+                            </div>
+                        </div>
+                        <div class="form-row form-row-3">
+                            <div class="form-group"><label>💳 Pago *</label>
+                                <select name="metodo_pago" class="form-control" required>
+                                    <option value="">Seleccionar</option>
+                                    <option>Efectivo</option>
+                                    <option>Transferencia</option>
+                                    <option>Tarjeta</option>
+                                    <option>Pago Móvil</option>
+                                    <option>Divisas</option>
+                                </select>
+                            </div>
+                            <div class="form-group"><label>📅 Entrega *</label>
+                                <input type="date" name="fecha_entrega" class="form-control" required>
+                            </div>
+                            <div class="form-group"><label>🔢 Nro. Lote *</label>
+                                <input name="nro_lote" class="form-control" placeholder="Ej: LOT-001" required>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>💰 Monto Total ($) *</label>
+                            <div style="display:flex;gap:0.5rem;align-items:center;flex-wrap:wrap">
+                                <input type="number" step="0.01" name="monto_total" id="monto-total" class="form-control" style="max-width:200px" min="0" placeholder="0.00" required>
+                                <span id="precio-calculado" style="font-size:0.8rem;color:var(--gray-500)">🤖 Cálculo automático</span>
+                            </div>
+                        </div>
+                        <div class="form-group" style="background:var(--gray-50);padding:0.5rem 1rem;border-radius:var(--radius);font-size:0.85rem;color:var(--gray-500)">
+                            ⏳ El pedido se creará con estado <strong>Pendiente</strong>
+                        </div>
+                        <button type="submit" class="btn btn-primary">✅ Realizar Pedido</button>
+                    </form>
                 </div>
-                <div class="form-row form-row-3">
-                    <div class="form-group"><label>💳 Pago *</label><select name="metodo_pago" class="form-control" required>
-                        <option value="">Seleccionar</option>
-                        <option>Efectivo</option>
-                        <option>Transferencia</option>
-                        <option>Tarjeta</option>
-                        <option>Pago Móvil</option>
-                        <option>Divisas</option>
-                    </select></div>
-                    <div class="form-group"><label>📅 Entrega *</label><input type="date" name="fecha_entrega" class="form-control" required></div>
-                    <div class="form-group"><label>🔢 Nro. Lote *</label><input name="nro_lote" class="form-control" placeholder="Ej: LOT-001" required></div>
-                </div>
-                <div class="form-group"><label>💰 Monto Total ($) *</label><input type="number" step="0.01" name="monto_total" class="form-control" style="max-width:200px" min="0" placeholder="0.00" required></div>
-                <div class="form-group" style="background:var(--gray-50);padding:0.5rem 1rem;border-radius:var(--radius);font-size:0.85rem;color:var(--gray-500)">
-                    ⏳ El pedido se creará con estado <strong>Pendiente</strong>
-                </div>
-                <button type="submit" class="btn btn-primary">✅ Realizar Pedido</button>
-            </form>
-        </div>
-    </div>`;
-}
+            </div>`;
+        }
 
         function renderMascotas() {
             let html = `<div class="card"><div class="card-header"><div><h2>🐾 Mis Mascotas</h2><p>${state.mascotas.length} registrada${state.mascotas.length!==1?'s':''}</p></div><button class="btn btn-primary btn-sm" id="btn-add-pet">➕ Agregar</button></div><div class="card-body">`;
@@ -1189,8 +1329,9 @@
                     <div class="tabs">
                         <button class="tab ${state.tab==='ventas'?'active':''}" data-tab="ventas">🛒 Ventas</button>
                         <button class="tab ${state.tab==='reportes'?'active':''}" data-tab="reportes">📊 Reportes</button>
+                        <button class="tab ${state.tab==='precios'?'active':''}" data-tab="precios">💰 Precios</button>
                     </div>
-                    <div id="tab-content">${state.tab === 'ventas' ? renderAdminVentas() : renderAdminReportes()}</div>
+                    <div id="tab-content">${state.tab === 'ventas' ? renderAdminVentas() : state.tab === 'reportes' ? renderAdminReportes() : renderAdminPrecios()}</div>
                 </div>
                 <div class="footer"><p>🛡️ AnimalPet Admin — Panel de Administración</p></div>
             </div>`;
@@ -1205,17 +1346,14 @@
                        (r.nro_lote||'').toLowerCase().includes(q);
             });
 
-            // Filtrar por estado
             const statusFiltered = state.statusFilter === 'todos' ? filtered : 
                 filtered.filter(r => (r.estado || ESTADOS.PENDIENTE) === state.statusFilter);
 
-            // Estadísticas
             const totalPedidos = filtered.length;
             const pendientes = filtered.filter(r => (r.estado || ESTADOS.PENDIENTE) === ESTADOS.PENDIENTE).length;
             const enProceso = filtered.filter(r => r.estado === ESTADOS.PROCESO).length;
             const completados = filtered.filter(r => r.estado === ESTADOS.COMPLETADO).length;
             
-            // Solo contar dinero de completados
             const totalCompletados = filtered
                 .filter(r => r.estado === ESTADOS.COMPLETADO)
                 .reduce((sum, r) => sum + Number(r.monto_total), 0);
@@ -1355,6 +1493,138 @@
             return html;
         }
 
+        function renderAdminPrecios() {
+            const precios = state.preciosConfig || [];
+            
+            let html = `
+            <div class="card">
+                <div class="card-header">
+                    <div style="display:flex;align-items:center;gap:0.75rem">
+                        <div style="width:36px;height:36px;border-radius:8px;background:var(--amber-100);display:flex;align-items:center;justify-content:center;font-size:18px;">💰</div>
+                        <div><h2>Configuración de Precios</h2>
+                        <p style="font-size:0.75rem;color:var(--gray-500)">Define los precios base por sabor, porción y gramos</p></div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" id="btn-add-precio">➕ Agregar Precio</button>
+                </div>
+                <div class="card-body">
+                    <div style="overflow-x:auto;margin-bottom:1rem">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>🍖 Sabor</th>
+                                    <th>📦 Porción</th>
+                                    <th>⚖️ Gramos (min)</th>
+                                    <th>⚖️ Gramos (max)</th>
+                                    <th>💵 Precio x Gramo</th>
+                                    <th>💰 Precio Base</th>
+                                    <th>🔧 Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+            
+            if (precios.length === 0) {
+                html += `<tr><td colspan="7" style="text-align:center;padding:2rem;color:var(--gray-400)">No hay configuraciones de precio. Agrega una.</td></tr>`;
+            } else {
+                precios.forEach(p => {
+                    html += `
+                        <tr>
+                            <td><span class="badge ${SABOR_COLOR[p.sabor] || 'badge-default'}">${p.sabor}</span></td>
+                            <td><span class="badge badge-default">${p.periodo_porcion}</span></td>
+                            <td>${p.gramos_min}</td>
+                            <td>${p.gramos_max}</td>
+                            <td><strong>$${Number(p.precio_por_gramo).toFixed(2)}</strong></td>
+                            <td><strong>$${Number(p.precio_base).toFixed(2)}</strong></td>
+                            <td>
+                                <button class="btn btn-danger btn-sm" onclick="deletePrecioConfig('${p.id}')">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            }
+            
+            html += `
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <div style="background:var(--gray-50);padding:1rem;border-radius:var(--radius);margin-top:1rem">
+                        <p style="font-size:0.8rem;color:var(--gray-600)">
+                            <strong>📌 Cálculo:</strong> Precio = (Gramos × Precio x Gramo) + Precio Base
+                        </p>
+                        <p style="font-size:0.75rem;color:var(--gray-500);margin-top:0.25rem">
+                            El precio se calculará automáticamente al seleccionar sabor, porción y gramos en el formulario de pedido.
+                        </p>
+                    </div>
+                </div>
+            </div>`;
+
+            if (state.showPrecioForm) {
+                html += renderPrecioForm();
+            }
+            
+            return html;
+        }
+
+        function renderPrecioForm() {
+            return `
+            <div id="precio-modal" style="position:fixed;inset:0;background:rgba(0,0,0,.5);display:flex;align-items:center;justify-content:center;z-index:100;padding:1rem">
+                <div style="background:var(--white);border-radius:0.75rem;width:100%;max-width:500px;max-height:90vh;overflow-y:auto;padding:1.5rem">
+                    <h2 style="font-size:1.1rem;font-weight:600;margin-bottom:1rem">💰 Agregar Configuración de Precio</h2>
+                    <form id="precio-form">
+                        <div class="form-row form-row-2">
+                            <div class="form-group">
+                                <label>🍖 Sabor *</label>
+                                <select name="sabor" class="form-control" required>
+                                    <option value="">Seleccionar</option>
+                                    <option>Carne</option>
+                                    <option>Pollo</option>
+                                    <option>Mixta</option>
+                                    <option>Personalizada</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>📦 Porción *</label>
+                                <select name="periodo_porcion" class="form-control" required>
+                                    <option value="">Seleccionar</option>
+                                    <option>Diaria</option>
+                                    <option>Semanal</option>
+                                    <option>Mensual</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row form-row-2">
+                            <div class="form-group">
+                                <label>⚖️ Gramos Mínimo *</label>
+                                <input type="number" name="gramos_min" class="form-control" min="1" required placeholder="1">
+                            </div>
+                            <div class="form-group">
+                                <label>⚖️ Gramos Máximo *</label>
+                                <input type="number" name="gramos_max" class="form-control" min="1" required placeholder="500">
+                            </div>
+                        </div>
+                        <div class="form-row form-row-2">
+                            <div class="form-group">
+                                <label>💵 Precio por Gramo ($) *</label>
+                                <input type="number" name="precio_por_gramo" class="form-control" step="0.01" min="0" required placeholder="0.05">
+                            </div>
+                            <div class="form-group">
+                                <label>💰 Precio Base ($)</label>
+                                <input type="number" name="precio_base" class="form-control" step="0.01" min="0" placeholder="0.00" value="0">
+                            </div>
+                        </div>
+                        <div style="background:var(--gray-50);padding:0.5rem 1rem;border-radius:var(--radius);font-size:0.8rem;color:var(--gray-500);margin-bottom:1rem">
+                            💡 <strong>Ejemplo:</strong> Si el precio x gramo es $0.05 y el precio base es $0, 
+                            para 500g el precio sería: 500 × 0.05 = $25.00
+                        </div>
+                        <div style="display:flex;gap:0.5rem;justify-content:flex-end;margin-top:1rem">
+                            <button type="button" class="btn btn-outline" id="btn-cancel-precio">✖️ Cancelar</button>
+                            <button type="submit" class="btn btn-primary">✅ Guardar</button>
+                        </div>
+                    </form>
+                </div>
+            </div>`;
+        }
+
         // ═══════════════════════════════════════════════════════════════════
         //  EVENTOS
         // ═══════════════════════════════════════════════════════════════════
@@ -1411,6 +1681,7 @@
                 el.addEventListener('click', () => {
                     state.tab = el.dataset.tab;
                     state.showPetForm = false;
+                    state.showPrecioForm = false;
                     state.expandedId = null;
                     state.expandedDay = null;
                     state.statusFilter = 'todos';
@@ -1421,13 +1692,45 @@
                 });
             });
 
-            // Filtros de estado en admin
             document.querySelectorAll('[data-status]').forEach(el => {
                 el.addEventListener('click', () => {
                     state.statusFilter = el.dataset.status;
                     render();
                 });
             });
+
+            // Calculador automático de precio
+            const saborSelect = document.getElementById('sabor-select');
+            const periodoSelect = document.getElementById('periodo-select');
+            const gramosInput = document.getElementById('gramos-input');
+            const montoTotal = document.getElementById('monto-total');
+            const precioCalculado = document.getElementById('precio-calculado');
+
+            async function actualizarPrecio() {
+                const sabor = saborSelect?.value;
+                const periodo = periodoSelect?.value;
+                const gramos = parseInt(gramosInput?.value) || 0;
+                
+                if (sabor && periodo && gramos > 0) {
+                    const precio = await calcularPrecio(sabor, periodo, gramos);
+                    if (montoTotal) {
+                        montoTotal.value = precio.toFixed(2);
+                    }
+                    if (precioCalculado) {
+                        precioCalculado.textContent = `✅ Calculado: $${precio.toFixed(2)}`;
+                        precioCalculado.style.color = 'var(--emerald-600)';
+                    }
+                } else {
+                    if (precioCalculado) {
+                        precioCalculado.textContent = '🤖 Selecciona sabor, porción y gramos';
+                        precioCalculado.style.color = 'var(--gray-500)';
+                    }
+                }
+            }
+
+            if (saborSelect) saborSelect.addEventListener('change', actualizarPrecio);
+            if (periodoSelect) periodoSelect.addEventListener('change', actualizarPrecio);
+            if (gramosInput) gramosInput.addEventListener('input', actualizarPrecio);
 
             const orderForm = document.getElementById('order-form');
             if (orderForm) {
@@ -1462,6 +1765,32 @@
                 state.showPetForm = false; 
                 render(); 
             });
+
+            const addPrecioBtn = document.getElementById('btn-add-precio');
+            if (addPrecioBtn) addPrecioBtn.addEventListener('click', () => { 
+                state.showPrecioForm = true; 
+                render(); 
+            });
+            
+            const cancelPrecioBtn = document.getElementById('btn-cancel-precio');
+            if (cancelPrecioBtn) cancelPrecioBtn.addEventListener('click', () => { 
+                state.showPrecioForm = false; 
+                render(); 
+            });
+
+            const precioForm = document.getElementById('precio-form');
+            if (precioForm) {
+                precioForm.addEventListener('submit', async (e) => {
+                    e.preventDefault();
+                    const fd = new FormData(precioForm);
+                    const obj = Object.fromEntries(fd);
+                    obj.precio_por_gramo = parseFloat(obj.precio_por_gramo) || 0;
+                    obj.precio_base = parseFloat(obj.precio_base) || 0;
+                    obj.gramos_min = parseInt(obj.gramos_min) || 0;
+                    obj.gramos_max = parseInt(obj.gramos_max) || 0;
+                    await savePrecioConfig(obj);
+                });
+            }
 
             document.querySelectorAll('[data-expand]').forEach(el => {
                 el.addEventListener('click', () => {
