@@ -144,11 +144,12 @@
         textarea.form-control{resize:vertical;min-height:60px}
         select.form-control{appearance:auto}
         .admin-badge{display:inline-flex;align-items:center;gap:4px;background:var(--purple-100);color:var(--purple-800);padding:2px 10px;border-radius:9999px;font-size:0.7rem;font-weight:600}
+        .loading-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
     </style>
 </head>
 <body>
     <div id="app">
-        <div class="auth-page">
+        <div class="loading-container">
             <div style="text-align:center">
                 <div style="display:inline-flex;align-items:center;gap:0.75rem;margin-bottom:2rem">
                     <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--emerald-500),var(--emerald-700));display:flex;align-items:center;justify-content:center;font-size:28px;">🐾</div>
@@ -197,69 +198,14 @@
             showPetForm: false,
             expandedId: null,
             expandedDay: null,
+            loading: false
         };
 
         const SABOR_COLOR = { 'Carne': 'badge-red', 'Pollo': 'badge-yellow', 'Mixta': 'badge-orange', 'Personalizada': 'badge-purple' };
 
         // ═══════════════════════════════════════════════════════════════════
-        //  ICONOS EMOJI
+        //  FUNCIONES AUXILIARES
         // ═══════════════════════════════════════════════════════════════════
-        const IC = {
-            paw: '🐾',
-            logout: '🚪',
-            plus: '➕',
-            trash: '🗑️',
-            shield: '🛡️',
-            bag: '🛒',
-            chart: '📊',
-            dollar: '💰',
-            package: '📦',
-            calendar: '📅',
-            phone: '📞',
-            x: '✖️',
-            dog: '🐕',
-            cat: '🐈',
-            user: '👤',
-            admin: '👑',
-            search: '🔍',
-            edit: '✏️',
-            check: '✅',
-            clock: '⏰',
-            star: '⭐',
-            home: '🏠',
-            database: '🗄️',
-            settings: '⚙️',
-            email: '📧',
-            location: '📍',
-            card: '💳',
-            cash: '💵',
-            transfer: '🏦',
-            weight: '⚖️',
-            alert: '⚠️',
-            info: 'ℹ️',
-            question: '❓',
-            heart: '❤️',
-            fire: '🔥',
-            new: '🆕',
-            pending: '⏳',
-            progress: '🔄',
-            completed: '✅',
-            cancelled: '❌',
-            meat: '🍖',
-            lock: '🔒',
-            number: '🔢',
-            medical: '🏥',
-            allergy: '🤧',
-            activity: '🏃',
-            gender: '⚤',
-            science: '🔬',
-            picky: '😋',
-        };
-
-        function icon(name) {
-            return IC[name] || '📋';
-        }
-
         function esc(s) { 
             if (s == null) return ''; 
             const d = document.createElement('div'); 
@@ -275,8 +221,13 @@
             setTimeout(() => el.remove(), 3000);
         }
 
+        function showLoading(show) {
+            state.loading = show;
+            render();
+        }
+
         // ═══════════════════════════════════════════════════════════════════
-        //  AUTENTICACIÓN CON TABLA PROFILES
+        //  AUTENTICACIÓN
         // ═══════════════════════════════════════════════════════════════════
         async function getUserRole(userId, email) {
             console.log('🔍 Consultando rol para:', email);
@@ -316,558 +267,653 @@
             }
         }
 
-       async function initAuth() {
-    console.log('🔍 Verificando sesión...');
-    try {
-        const { data: { session } } = await sb.auth.getSession();
-        console.log('📋 Sesión:', session ? 'Activa' : 'No hay sesión');
-        
-        if (session) {
-            state.user = session.user;
-            
-            // Asegurar que el cliente existe
-            const clienteOk = await ensureClienteExists();
-            if (!clienteOk) {
-                console.warn('⚠️ No se pudo crear el perfil de cliente');
+        async function initAuth() {
+            console.log('🔍 Verificando sesión...');
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                
+                if (session) {
+                    state.user = session.user;
+                    const role = await getUserRole(session.user.id, session.user.email);
+                    state.role = role;
+                    state.view = role === 'admin' ? 'admin' : 'cliente';
+                    
+                    if (state.role === 'admin') {
+                        state.tab = 'ventas';
+                        await loadAdminData();
+                    } else {
+                        state.tab = 'pedir';
+                        await loadClienteData();
+                    }
+                    
+                    console.log('👤 Usuario:', session.user.email, '| Rol:', state.role);
+                }
+            } catch (err) {
+                console.error('❌ Error verificando sesión:', err);
             }
             
-            // Obtener el rol
-            const role = await getUserRole(session.user.id, session.user.email);
-            state.role = role;
-            state.view = role === 'admin' ? 'admin' : 'cliente';
+            render();
+        }
+
+        // Escuchar cambios de autenticación
+        sb.auth.onAuthStateChange(async (event, session) => {
+            console.log('🔄 Cambio de estado auth:', event);
             
-            if (state.role === 'admin') {
-                state.tab = 'ventas';
-                await loadAdminData();
+            if (session) {
+                state.user = session.user;
+                const role = await getUserRole(session.user.id, session.user.email);
+                state.role = role;
+                state.view = role === 'admin' ? 'admin' : 'cliente';
+                
+                if (state.role === 'admin') {
+                    state.tab = 'ventas';
+                    await loadAdminData();
+                } else {
+                    state.tab = 'pedir';
+                    await loadClienteData();
+                }
+                
+                console.log('👤 Sesión iniciada:', session.user.email, '| Rol:', state.role);
             } else {
+                state.user = null;
+                state.role = null;
+                state.view = 'auth';
                 state.tab = 'pedir';
-                // ⭐ IMPORTANTE: Cargar los datos del cliente
-                await loadClienteData();
+                state.mascotas = [];
+                state.pedidos = [];
+                console.log('👋 Sesión cerrada');
             }
             
-            console.log('👤 Usuario:', session.user.email, '| Rol:', state.role);
-        }
-    } catch (err) {
-        console.error('❌ Error verificando sesión:', err);
-    }
-    
-    render();
-}
-
-// ⭐ MEJORAR: Escuchar cambios de autenticación
-sb.auth.onAuthStateChange(async (event, session) => {
-    console.log('🔄 Cambio de estado auth:', event);
-    
-    if (session) {
-        state.user = session.user;
-        
-        // Asegurar que el cliente existe
-        const clienteOk = await ensureClienteExists();
-        if (!clienteOk) {
-            console.warn('⚠️ No se pudo crear el perfil de cliente');
-        }
-        
-        const role = await getUserRole(session.user.id, session.user.email);
-        state.role = role;
-        state.view = role === 'admin' ? 'admin' : 'cliente';
-        
-        if (state.role === 'admin') {
-            state.tab = 'ventas';
-            await loadAdminData();
-        } else {
-            state.tab = 'pedir';
-            // ⭐ IMPORTANTE: Cargar los datos del cliente
-            await loadClienteData();
-        }
-        
-        console.log('👤 Sesión iniciada:', session.user.email, '| Rol:', state.role);
-    } else {
-        state.user = null;
-        state.role = null;
-        state.view = 'auth';
-        state.tab = 'pedir';
-        state.mascotas = [];
-        state.pedidos = [];
-        console.log('👋 Sesión cerrada');
-    }
-    
-    render();
-});
-
-       async function login(email, password) {
-    console.log('🔑 Intentando login:', email);
-    
-    try {
-        // 1. Intentar iniciar sesión
-        const { data, error } = await sb.auth.signInWithPassword({ 
-            email, 
-            password 
+            render();
         });
-        
-        if (error) {
-            console.error('❌ Error login:', error.message);
-            toast(error.message, 'error');
-            return false;
-        }
-        
-        console.log('✅ Login exitoso');
-        
-        // 2. Verificar que el usuario se haya establecido
-        if (!data.user) {
-            console.error('❌ No se recibió usuario después del login');
-            toast('Error al obtener datos del usuario', 'error');
-            return false;
-        }
-        
-        // 3. Actualizar el estado del usuario
-        state.user = data.user;
-        console.log('👤 Usuario logueado:', state.user.email);
-        
-        // 4. Asegurar que el cliente existe en la base de datos
-        console.log('🔍 Verificando/creando cliente...');
-        const clienteOk = await ensureClienteExists();
-        
-        if (!clienteOk) {
-            console.error('❌ Error al asegurar la existencia del cliente');
-            toast('Error al configurar tu perfil. Intenta de nuevo.', 'error');
-            // Intentar una vez más con un enfoque más directo
-            const clienteDirecto = await ensureClienteExists();
-            if (!clienteDirecto) {
-                toast('No se pudo crear tu perfil. Contacta al administrador.', 'error');
+
+        async function login(email, password) {
+            showLoading(true);
+            
+            try {
+                const { data, error } = await sb.auth.signInWithPassword({ 
+                    email, 
+                    password 
+                });
+                
+                if (error) {
+                    console.error('❌ Error login:', error.message);
+                    toast(error.message, 'error');
+                    showLoading(false);
+                    return false;
+                }
+                
+                console.log('✅ Login exitoso');
+                
+                if (!data.user) {
+                    console.error('❌ No se recibió usuario después del login');
+                    toast('Error al obtener datos del usuario', 'error');
+                    showLoading(false);
+                    return false;
+                }
+                
+                state.user = data.user;
+                console.log('👤 Usuario logueado:', state.user.email);
+                
+                // Asegurar que el cliente existe
+                const clienteOk = await ensureClienteExists();
+                if (!clienteOk) {
+                    console.error('❌ Error al asegurar la existencia del cliente');
+                    toast('Error al configurar tu perfil. Intenta de nuevo.', 'error');
+                    showLoading(false);
+                    return false;
+                }
+                
+                const role = await getUserRole(state.user.id, state.user.email);
+                state.role = role;
+                console.log('👤 Rol:', state.role);
+                
+                if (state.role === 'admin') {
+                    state.view = 'admin';
+                    state.tab = 'ventas';
+                    await loadAdminData();
+                } else {
+                    state.view = 'cliente';
+                    state.tab = 'pedir';
+                    await loadClienteData();
+                }
+                
+                render();
+                
+                const nombre = state.user.user_metadata?.nombre || state.user.email;
+                toast(`👋 ¡Bienvenido ${nombre}!`, 'success');
+                
+                showLoading(false);
+                return true;
+                
+            } catch (err) {
+                console.error('❌ Error inesperado en login:', err);
+                toast('Error al iniciar sesión: ' + err.message, 'error');
+                showLoading(false);
                 return false;
             }
         }
-        
-        // 5. Obtener el rol del usuario
-        console.log('🔍 Obteniendo rol del usuario...');
-        const role = await getUserRole(state.user.id, state.user.email);
-        state.role = role;
-        console.log('👤 Rol:', state.role);
-        
-        // 6. Configurar la vista según el rol
-        if (state.role === 'admin') {
-            state.view = 'admin';
-            state.tab = 'ventas';
-            console.log('📊 Cargando datos de administrador...');
-            await loadAdminData();
-        } else {
-            state.view = 'cliente';
-            state.tab = 'pedir';
-            console.log('🐾 Cargando datos del cliente...');
-            await loadClienteData();
-        }
-        
-        // 7. Renderizar la interfaz
-        console.log('🎨 Renderizando interfaz...');
-        render();
-        
-        // 8. Mostrar mensaje de bienvenida
-        const nombre = state.user.user_metadata?.nombre || state.user.email;
-        toast(`👋 ¡Bienvenido ${nombre}!`, 'success');
-        
-        return true;
-        
-    } catch (err) {
-        console.error('❌ Error inesperado en login:', err);
-        toast('Error al iniciar sesión: ' + err.message, 'error');
-        return false;
-    }
-}
 
-
-
-
-
-async function ensureClienteExists() {
-    if (!state.user) {
-        console.error('❌ No hay usuario en state');
-        return false;
-    }
-
-    const userId = state.user.id;
-    const userEmail = state.user.email;
-    const userMetadata = state.user.user_metadata || {};
-
-    console.log('🔍 Verificando cliente:', userId, userEmail);
-
-    try {
-        // 1. Buscar por ID
-        const { data: clientePorId, error: errorId } = await sbAdmin
-            .from('clientes')
-            .select('*')
-            .eq('id', userId)
-            .maybeSingle();
-
-        if (clientePorId) {
-            console.log('✅ Cliente encontrado por ID');
-            // Actualizar email si cambió
-            if (clientePorId.email !== userEmail) {
-                await sbAdmin.from('clientes')
-                    .update({ email: userEmail })
-                    .eq('id', userId);
-            }
-            return true;
-        }
-
-        // 2. Buscar por email (puede haber registro huérfano)
-        const { data: clientePorEmail, error: errorEmail } = await sbAdmin
-            .from('clientes')
-            .select('*')
-            .eq('email', userEmail)
-            .maybeSingle();
-
-        if (clientePorEmail) {
-            console.log('📝 Cliente encontrado por email, actualizando ID...');
+        async function register(nombre, email, password, telefono, direccion) {
+            showLoading(true);
             
-            // Si el ID del cliente no coincide con el usuario, actualizar
-            if (clientePorEmail.id !== userId) {
-                // Primero verificar si el nuevo ID está libre
-                const { data: idCheck } = await sbAdmin
-                    .from('clientes')
-                    .select('id')
-                    .eq('id', userId)
-                    .maybeSingle();
-                    
-                if (idCheck) {
-                    // El ID ya existe, eliminar el registro duplicado
-                    console.log('🗑️ Eliminando registro duplicado...');
-                    await sbAdmin.from('clientes').delete().eq('id', userId);
+            try {
+                // 1. Registrar usuario
+                const { data, error } = await sb.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            nombre: nombre,
+                            telefono: telefono,
+                            direccion: direccion
+                        }
+                    }
+                });
+
+                if (error) {
+                    console.error('❌ Error registro:', error);
+                    toast(error.message, 'error');
+                    showLoading(false);
+                    return;
                 }
+
+                if (!data.user) {
+                    toast('Error: No se pudo crear el usuario', 'error');
+                    showLoading(false);
+                    return;
+                }
+
+                console.log('✅ Usuario registrado:', data.user.id);
                 
-                // Actualizar el registro existente con el nuevo ID
-                const { error: updateErr } = await sbAdmin
-                    .from('clientes')
-                    .update({ 
-                        id: userId,
-                        nombre_propietario: userMetadata.nombre || userEmail,
-                        telefono: userMetadata.telefono || 'No especificado',
-                        direccion: userMetadata.direccion || null,
-                    })
-                    .eq('email', userEmail);
-
-                if (updateErr) {
-                    console.error('❌ Error actualizando cliente:', updateErr);
-                    return false;
-                }
-                console.log('✅ Cliente actualizado con nuevo ID');
-                return true;
-            }
-            return true;
-        }
-
-        // 3. No existe, crear nuevo
-        console.log('📝 Creando nuevo cliente...');
-        const nuevoCliente = {
-            id: userId,
-            nombre_propietario: userMetadata.nombre || userEmail.split('@')[0] || 'Usuario',
-            email: userEmail,
-            telefono: userMetadata.telefono || 'No especificado',
-            direccion: userMetadata.direccion || null,
-            rol: 'cliente'
-        };
-
-        const { error: insertErr } = await sbAdmin
-            .from('clientes')
-            .upsert([nuevoCliente], { 
-                onConflict: 'id',
-                ignoreDuplicates: false 
-            });
-
-        if (insertErr) {
-            console.error('❌ Error creando cliente:', insertErr);
-            
-            // Si es error de duplicado de email, intentar limpiar
-            if (insertErr.code === '23505') {
-                console.log('⚠️ Conflicto de email, limpiando...');
-                await sbAdmin.from('clientes').delete().eq('email', userEmail);
+                // 2. Esperar un momento para que el usuario se cree en la base de datos
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                const { error: retryErr } = await sbAdmin
+                // 3. Crear perfil en clientes
+                const { error: clienteError } = await sbAdmin
                     .from('clientes')
-                    .insert([nuevoCliente]);
-                    
-                if (retryErr) {
-                    console.error('❌ Error en reintento:', retryErr);
-                    return false;
+                    .insert([{
+                        id: data.user.id,
+                        nombre_propietario: nombre,
+                        email: email,
+                        telefono: telefono || 'No especificado',
+                        direccion: direccion || null,
+                        rol: 'cliente'
+                    }]);
+
+                if (clienteError) {
+                    console.error('❌ Error creando cliente:', clienteError);
+                    toast('Usuario creado pero error al crear perfil. Contacta al administrador.', 'error');
+                    showLoading(false);
+                    return;
                 }
-                console.log('✅ Cliente creado después de limpieza');
-                return true;
+
+                // 4. Crear perfil en profiles
+                const { error: profileError } = await sbAdmin
+                    .from('profiles')
+                    .insert([{
+                        id: data.user.id,
+                        email: email,
+                        role: 'user'
+                    }]);
+
+                if (profileError) {
+                    console.error('❌ Error creando profile:', profileError);
+                }
+
+                toast('✅ Cuenta creada exitosamente. Por favor inicia sesión.', 'success');
+                showLoading(false);
+                
+                // Cambiar a modo login
+                const toggle = document.getElementById('auth-toggle-link');
+                if (toggle) toggle.click();
+                
+            } catch (err) {
+                console.error('❌ Error en registro:', err);
+                toast('Error al crear cuenta: ' + err.message, 'error');
+                showLoading(false);
             }
-            return false;
         }
-
-        console.log('✅ Cliente creado exitosamente');
-        return true;
-
-    } catch (err) {
-        console.error('❌ Error en ensureClienteExists:', err);
-        return false;
-    }
-}
-
-
-
-
 
         async function logout() {
             console.log('👋 Cerrando sesión...');
             await sb.auth.signOut();
+            state.view = 'auth';
+            state.tab = 'pedir';
+            state.mascotas = [];
+            state.pedidos = [];
+            state.user = null;
+            state.role = null;
+            render();
         }
 
-        // ═══════════════════════════════════════════════════════════════════
-        //  API
-        // ═══════════════════════════════════════════════════════════════════
-       async function loadClienteData() {
-    if (!state.user) {
-        console.log('⚠️ No hay usuario, no se cargan datos');
-        return;
-    }
+        async function ensureClienteExists() {
+            if (!state.user) {
+                console.error('❌ No hay usuario en state');
+                return false;
+            }
 
-    // Asegurar que el cliente existe
-    const clienteOk = await ensureClienteExists();
-    if (!clienteOk) {
-        console.error('❌ No se pudo asegurar la existencia del cliente');
-        toast('Error: No se pudo cargar tu perfil. Cierra sesión y vuelve a intentar.', 'error');
-        return;
-    }
-    
-    const uid = state.user.id;
-    console.log('📊 Cargando datos del cliente:', uid);
-    
-    try {
-        // Cargar mascotas y pedidos en paralelo
-        const [mRes, pRes] = await Promise.all([
-            sbAdmin.from('mascotas').select('*').eq('cliente_id', uid).order('created_at', { ascending: false }),
-            sbAdmin.from('pedidos').select('*, mascota:mascotas(id,nombre,tipo,raza,peso_kg)').eq('cliente_id', uid).order('created_at', { ascending: false }),
-        ]);
-        
-        state.mascotas = mRes.data || [];
-        state.pedidos = pRes.data || [];
-        
-        console.log(`📊 Datos cargados: ${state.mascotas.length} mascotas, ${state.pedidos.length} pedidos`);
-        
-        // Mostrar un mensaje si no hay datos
-        if (state.mascotas.length === 0 && state.pedidos.length === 0) {
-            console.log('📝 No hay datos aún para este cliente');
-        }
-        
-        // ⭐ Forzar renderizado después de cargar datos
-        render();
-        
-    } catch (err) {
-        console.error('❌ Error cargando datos:', err);
-        state.mascotas = [];
-        state.pedidos = [];
-        render();
-    }
-}
+            const userId = state.user.id;
+            const userEmail = state.user.email;
+            const userMetadata = state.user.user_metadata || {};
 
-        async function savePet(form) {
-    // Asegurar que el cliente existe antes de crear la mascota
-    const clienteOk = await ensureClienteExists();
-    if (!clienteOk) {
-        return toast('Error al verificar el cliente. Intenta de nuevo.', 'error');
-    }
+            console.log('🔍 Verificando cliente:', userId, userEmail);
 
-    // Validar que el cliente existe en la base de datos antes de insertar
-    const { data: cliente, error: clienteCheck } = await sbAdmin
-        .from('clientes')
-        .select('id')
-        .eq('id', state.user.id)
-        .maybeSingle();
+            try {
+                const { data: cliente, error } = await sbAdmin
+                    .from('clientes')
+                    .select('*')
+                    .eq('id', userId)
+                    .single();
 
-    if (!cliente) {
-        console.error('❌ Cliente no encontrado después de ensureClienteExists');
-        return toast('Error: Cliente no encontrado. Por favor, cierra sesión y vuelve a iniciar.', 'error');
-    }
+                if (cliente) {
+                    console.log('✅ Cliente encontrado');
+                    return true;
+                }
 
-    // Crear la mascota
-    const mascotaData = {
-        cliente_id: state.user.id,
-        nombre: form.nombre, 
-        tipo: form.tipo,
-        edad_anios: parseInt(form.edad_anios) || 0,
-        edad_meses: parseInt(form.edad_meses) || 0,
-        peso_kg: parseFloat(form.peso_kg) || 0,
-        sexo: form.sexo, 
-        raza: form.raza || null,
-        actividad_fisica: form.actividad_fisica,
-        condicion_medica: form.condicion_medica || null,
-        picky_eater: form.picky_eater === 'true',
-        alergias: form.alergias || null,
-    };
+                console.log('📝 Creando nuevo cliente...');
+                const { error: insertErr } = await sbAdmin
+                    .from('clientes')
+                    .insert([{
+                        id: userId,
+                        nombre_propietario: userMetadata.nombre || userEmail.split('@')[0] || 'Usuario',
+                        email: userEmail,
+                        telefono: userMetadata.telefono || 'No especificado',
+                        direccion: userMetadata.direccion || null,
+                        rol: 'cliente'
+                    }]);
 
-    console.log('🐾 Creando mascota para cliente:', state.user.id);
-    console.log('📋 Datos de mascota:', mascotaData);
+                if (insertErr) {
+                    console.error('❌ Error creando cliente:', insertErr);
+                    return false;
+                }
 
-    const { data: result, error } = await sbAdmin
-        .from('mascotas')
-        .insert([mascotaData])
-        .select();
+                console.log('✅ Cliente creado exitosamente');
+                return true;
 
-    if (error) {
-        console.error('❌ Error creando mascota:', error);
-        return toast('Error al registrar mascota: ' + error.message, 'error');
-    }
-
-    console.log('✅ Mascota registrada exitosamente:', result);
-    toast('✅ Mascota registrada exitosamente');
-    state.showPetForm = false;
-    await loadClienteData();
-    render();
-}
-
-        async function deletePet(id) {
-    if (!confirm('¿Eliminar esta mascota y todos sus pedidos?')) {
-        return;
-    }
-    
-    console.log('🗑️ Eliminando mascota:', id);
-    
-    try {
-        // 1. Eliminar pedidos primero
-        const { error: pedidosErr } = await sbAdmin
-            .from('pedidos')
-            .delete()
-            .eq('mascota_id', id);
-            
-        if (pedidosErr) {
-            console.error('❌ Error eliminando pedidos:', pedidosErr);
-            toast('Error eliminando pedidos: ' + pedidosErr.message, 'error');
-            return;
-        }
-        
-        // 2. Verificar que los pedidos se eliminaron
-        const { data: pedidosRestantes } = await sbAdmin
-            .from('pedidos')
-            .select('id')
-            .eq('mascota_id', id);
-            
-        if (pedidosRestantes && pedidosRestantes.length > 0) {
-            console.log('⚠️ Aún hay pedidos, intentando eliminación forzada...');
-            // Eliminar uno por uno
-            for (const p of pedidosRestantes) {
-                await sbAdmin.from('pedidos').delete().eq('id', p.id);
+            } catch (err) {
+                console.error('❌ Error en ensureClienteExists:', err);
+                return false;
             }
         }
-        
-        // 3. Eliminar la mascota
-        const { error: mascotaErr } = await sbAdmin
-            .from('mascotas')
-            .delete()
-            .eq('id', id);
-            
-        if (mascotaErr) {
-            console.error('❌ Error eliminando mascota:', mascotaErr);
-            toast('Error eliminando mascota: ' + mascotaErr.message, 'error');
-            return;
-        }
-        
-        // 4. Actualizar el estado local
-        state.mascotas = state.mascotas.filter(m => m.id !== id);
-        
-        // 5. Recargar datos
-        await loadClienteData();
-        render();
-        
-        toast('✅ Mascota eliminada correctamente', 'success');
-        
-    } catch (err) {
-        console.error('❌ Error:', err);
-        toast('Error al eliminar: ' + err.message, 'error');
-    }
-}
 
-        async function placeOrder(form) {
-            const { error } = await sbAdmin.from('pedidos').insert([{
-                cliente_id: state.user.id,
-                mascota_id: form.mascota_id,
-                sabor: form.sabor,
-                periodo_porcion: form.periodo_porcion,
-                cantidad_gramos: parseInt(form.cantidad_gramos) || 0,
-                metodo_pago: form.metodo_pago,
-                fecha_entrega: form.fecha_entrega,
-                nro_lote: form.nro_lote,
-                monto_total: parseFloat(form.monto_total) || 0,
-            }]);
-            if (error) return toast(error.message, 'error');
-            toast('✅ Pedido realizado');
-            state.tab = 'historial';
-            await loadClienteData();
-            render();
+        // ═══════════════════════════════════════════════════════════════════
+        //  API - CARGA DE DATOS
+        // ═══════════════════════════════════════════════════════════════════
+        async function loadClienteData() {
+            if (!state.user) {
+                console.log('⚠️ No hay usuario, no se cargan datos');
+                return;
+            }
+
+            const uid = state.user.id;
+            console.log('📊 Cargando datos del cliente:', uid);
+            
+            try {
+                // Cargar mascotas
+                const { data: mascotas, error: mErr } = await sbAdmin
+                    .from('mascotas')
+                    .select('*')
+                    .eq('cliente_id', uid)
+                    .order('created_at', { ascending: false });
+                
+                if (mErr) {
+                    console.error('❌ Error cargando mascotas:', mErr);
+                    state.mascotas = [];
+                } else {
+                    state.mascotas = mascotas || [];
+                }
+                
+                // Cargar pedidos con relación a mascotas
+                const { data: pedidos, error: pErr } = await sbAdmin
+                    .from('pedidos')
+                    .select('*, mascota:mascotas(id,nombre,tipo,raza,peso_kg)')
+                    .eq('cliente_id', uid)
+                    .order('created_at', { ascending: false });
+                
+                if (pErr) {
+                    console.error('❌ Error cargando pedidos:', pErr);
+                    state.pedidos = [];
+                } else {
+                    state.pedidos = pedidos || [];
+                }
+                
+                console.log(`📊 Datos cargados: ${state.mascotas.length} mascotas, ${state.pedidos.length} pedidos`);
+                
+            } catch (err) {
+                console.error('❌ Error cargando datos:', err);
+                state.mascotas = [];
+                state.pedidos = [];
+            }
         }
 
         async function loadAdminData() {
             console.log('📊 Cargando datos del admin...');
-            const { data } = await sbAdmin.from('pedidos').select(`
-                *, 
-                cliente:clientes(id,nombre_propietario,email,telefono,direccion),
-                mascota:mascotas(id,nombre,tipo,raza,peso_kg,actividad_fisica,picky_eater,condicion_medica,alergias)
-            `).order('created_at', { ascending: false });
-            
-            state.allPedidos = data || [];
-            console.log(`📊 ${state.allPedidos.length} pedidos cargados`);
+            try {
+                const { data, error } = await sbAdmin
+                    .from('pedidos')
+                    .select(`
+                        *, 
+                        cliente:clientes(id,nombre_propietario,email,telefono,direccion),
+                        mascota:mascotas(id,nombre,tipo,raza,peso_kg,actividad_fisica,picky_eater,condicion_medica,alergias)
+                    `)
+                    .order('created_at', { ascending: false });
+                
+                if (error) {
+                    console.error('❌ Error cargando pedidos admin:', error);
+                    state.allPedidos = [];
+                } else {
+                    state.allPedidos = data || [];
+                }
+                
+                console.log(`📊 ${state.allPedidos.length} pedidos cargados`);
+            } catch (err) {
+                console.error('❌ Error en loadAdminData:', err);
+                state.allPedidos = [];
+            }
         }
 
         async function loadReporte() {
-            let q = sbAdmin.from('pedidos').select(`
-                *, 
-                cliente:clientes(id,nombre_propietario,email,telefono),
-                mascota:mascotas(id,nombre,tipo,raza)
-            `).order('fecha_entrega', { ascending: true });
-            
-            if (state.desde) q = q.gte('fecha_entrega', state.desde);
-            if (state.hasta) q = q.lte('fecha_entrega', state.hasta);
-            
-            const { data } = await q;
-            const pedidos = data || [];
-            const dias = {};
-            
-            pedidos.forEach(p => {
-                if (!dias[p.fecha_entrega]) {
-                    dias[p.fecha_entrega] = { 
-                        fecha: p.fecha_entrega, 
-                        total_ventas: 0, 
-                        cantidad_pedidos: 0, 
-                        pedidos: [] 
-                    };
+            try {
+                let q = sbAdmin
+                    .from('pedidos')
+                    .select(`
+                        *, 
+                        cliente:clientes(id,nombre_propietario,email,telefono),
+                        mascota:mascotas(id,nombre,tipo,raza)
+                    `)
+                    .order('fecha_entrega', { ascending: true });
+                
+                if (state.desde) q = q.gte('fecha_entrega', state.desde);
+                if (state.hasta) q = q.lte('fecha_entrega', state.hasta);
+                
+                const { data, error } = await q;
+                
+                if (error) {
+                    console.error('❌ Error cargando reporte:', error);
+                    state.reporte = [];
+                    state.resumen = { total_general: 0, total_pedidos: 0, total_dias: 0 };
+                    return;
                 }
-                dias[p.fecha_entrega].total_ventas += Number(p.monto_total);
-                dias[p.fecha_entrega].cantidad_pedidos++;
-                dias[p.fecha_entrega].pedidos.push(p);
-            });
+                
+                const pedidos = data || [];
+                const dias = {};
+                
+                pedidos.forEach(p => {
+                    if (!dias[p.fecha_entrega]) {
+                        dias[p.fecha_entrega] = { 
+                            fecha: p.fecha_entrega, 
+                            total_ventas: 0, 
+                            cantidad_pedidos: 0, 
+                            pedidos: [] 
+                        };
+                    }
+                    dias[p.fecha_entrega].total_ventas += Number(p.monto_total);
+                    dias[p.fecha_entrega].cantidad_pedidos++;
+                    dias[p.fecha_entrega].pedidos.push(p);
+                });
+                
+                state.reporte = Object.values(dias).sort((a, b) => a.fecha.localeCompare(b.fecha));
+                state.resumen = {
+                    total_general: state.reporte.reduce((s, d) => s + d.total_ventas, 0),
+                    total_pedidos: state.reporte.reduce((s, d) => s + d.cantidad_pedidos, 0),
+                    total_dias: state.reporte.length,
+                };
+                
+                console.log(`📊 Reporte: ${state.reporte.length} días, ${state.resumen.total_pedidos} pedidos`);
+            } catch (err) {
+                console.error('❌ Error en loadReporte:', err);
+                state.reporte = [];
+                state.resumen = { total_general: 0, total_pedidos: 0, total_dias: 0 };
+            }
+        }
+
+        // ═══════════════════════════════════════════════════════════════════
+        //  API - OPERACIONES
+        // ═══════════════════════════════════════════════════════════════════
+        async function savePet(form) {
+            showLoading(true);
             
-            state.reporte = Object.values(dias).sort((a, b) => a.fecha.localeCompare(b.fecha));
-            state.resumen = {
-                total_general: state.reporte.reduce((s, d) => s + d.total_ventas, 0),
-                total_pedidos: state.reporte.reduce((s, d) => s + d.cantidad_pedidos, 0),
-                total_dias: state.reporte.length,
-            };
+            try {
+                // Validar que el cliente existe
+                const clienteOk = await ensureClienteExists();
+                if (!clienteOk) {
+                    toast('Error al verificar el cliente. Intenta de nuevo.', 'error');
+                    showLoading(false);
+                    return;
+                }
+
+                // Verificar cliente en base de datos
+                const { data: cliente, error: clienteCheck } = await sbAdmin
+                    .from('clientes')
+                    .select('id')
+                    .eq('id', state.user.id)
+                    .maybeSingle();
+
+                if (!cliente) {
+                    console.error('❌ Cliente no encontrado');
+                    toast('Error: Cliente no encontrado. Por favor, cierra sesión y vuelve a iniciar.', 'error');
+                    showLoading(false);
+                    return;
+                }
+
+                // Crear la mascota
+                const mascotaData = {
+                    cliente_id: state.user.id,
+                    nombre: form.nombre, 
+                    tipo: form.tipo,
+                    edad_anios: parseInt(form.edad_anios) || 0,
+                    edad_meses: parseInt(form.edad_meses) || 0,
+                    peso_kg: parseFloat(form.peso_kg) || 0,
+                    sexo: form.sexo, 
+                    raza: form.raza || null,
+                    actividad_fisica: form.actividad_fisica,
+                    condicion_medica: form.condicion_medica || null,
+                    picky_eater: form.picky_eater === 'true',
+                    alergias: form.alergias || null,
+                };
+
+                console.log('🐾 Creando mascota para cliente:', state.user.id);
+                console.log('📋 Datos:', mascotaData);
+
+                const { data: result, error } = await sbAdmin
+                    .from('mascotas')
+                    .insert([mascotaData])
+                    .select();
+
+                if (error) {
+                    console.error('❌ Error creando mascota:', error);
+                    toast('Error al registrar mascota: ' + error.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+
+                console.log('✅ Mascota registrada:', result);
+                toast('✅ Mascota registrada exitosamente');
+                
+                state.showPetForm = false;
+                await loadClienteData();
+                render();
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en savePet:', err);
+                toast('Error al guardar: ' + err.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        // ⭐ FUNCIÓN CORREGIDA - ELIMINAR MASCOTA
+        async function deletePet(id) {
+            if (!confirm('⚠️ ¿Eliminar esta mascota y todos sus pedidos asociados?')) {
+                return;
+            }
+            
+            showLoading(true);
+            console.log('🗑️ Eliminando mascota:', id);
+            
+            try {
+                // 1. Verificar que la mascota existe
+                const { data: mascota, error: mascotaCheck } = await sbAdmin
+                    .from('mascotas')
+                    .select('id, nombre')
+                    .eq('id', id)
+                    .single();
+                    
+                if (mascotaCheck || !mascota) {
+                    console.error('❌ Mascota no encontrada:', mascotaCheck);
+                    toast('Mascota no encontrada', 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                // 2. Eliminar pedidos asociados
+                console.log(`📦 Eliminando pedidos de la mascota: ${mascota.nombre}`);
+                const { error: pedidosErr } = await sbAdmin
+                    .from('pedidos')
+                    .delete()
+                    .eq('mascota_id', id);
+                    
+                if (pedidosErr) {
+                    console.error('❌ Error eliminando pedidos:', pedidosErr);
+                    toast('Error eliminando pedidos: ' + pedidosErr.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                // 3. Eliminar la mascota
+                console.log(`🗑️ Eliminando mascota: ${mascota.nombre}`);
+                const { error: mascotaErr } = await sbAdmin
+                    .from('mascotas')
+                    .delete()
+                    .eq('id', id);
+                    
+                if (mascotaErr) {
+                    console.error('❌ Error eliminando mascota:', mascotaErr);
+                    toast('Error eliminando mascota: ' + mascotaErr.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                console.log('✅ Mascota y pedidos eliminados correctamente');
+                
+                // 4. Actualizar estado local
+                state.mascotas = state.mascotas.filter(m => m.id !== id);
+                state.pedidos = state.pedidos.filter(p => p.mascota_id !== id);
+                
+                // 5. Si el usuario está en la vista de pedidos, actualizar
+                if (state.tab === 'pedir') {
+                    // Recargar datos para actualizar el formulario
+                    await loadClienteData();
+                }
+                
+                render();
+                toast(`✅ Mascota "${mascota.nombre}" eliminada correctamente`, 'success');
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en deletePet:', err);
+                toast('Error al eliminar: ' + err.message, 'error');
+                showLoading(false);
+            }
+        }
+
+        async function placeOrder(form) {
+            showLoading(true);
+            
+            try {
+                const { error } = await sbAdmin
+                    .from('pedidos')
+                    .insert([{
+                        cliente_id: state.user.id,
+                        mascota_id: form.mascota_id,
+                        sabor: form.sabor,
+                        periodo_porcion: form.periodo_porcion,
+                        cantidad_gramos: parseInt(form.cantidad_gramos) || 0,
+                        metodo_pago: form.metodo_pago,
+                        fecha_entrega: form.fecha_entrega,
+                        nro_lote: form.nro_lote,
+                        monto_total: parseFloat(form.monto_total) || 0,
+                    }]);
+                    
+                if (error) {
+                    console.error('❌ Error creando pedido:', error);
+                    toast(error.message, 'error');
+                    showLoading(false);
+                    return;
+                }
+                
+                toast('✅ Pedido realizado exitosamente');
+                state.tab = 'historial';
+                await loadClienteData();
+                render();
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en placeOrder:', err);
+                toast('Error al realizar pedido: ' + err.message, 'error');
+                showLoading(false);
+            }
         }
 
         async function deleteRegistro(id) {
             if (!confirm('¿Eliminar este registro?')) return;
             
-            const { data: ped } = await sbAdmin.from('pedidos')
-                .select('mascota_id,cliente_id')
-                .eq('id', id)
-                .single();
+            showLoading(true);
+            
+            try {
+                const { data: ped, error } = await sbAdmin
+                    .from('pedidos')
+                    .select('mascota_id, cliente_id')
+                    .eq('id', id)
+                    .single();
+                    
+                if (error || !ped) {
+                    console.error('❌ Pedido no encontrado:', error);
+                    toast('Pedido no encontrado', 'error');
+                    showLoading(false);
+                    return;
+                }
                 
-            if (ped) {
+                // Eliminar pedido
                 await sbAdmin.from('pedidos').delete().eq('id', id);
-                await sbAdmin.from('mascotas').delete().eq('id', ped.mascota_id);
                 
-                const { data: other } = await sbAdmin.from('mascotas')
+                // Verificar si la mascota tiene otros pedidos
+                const { data: other } = await sbAdmin
+                    .from('pedidos')
                     .select('id')
-                    .eq('cliente_id', ped.cliente_id);
+                    .eq('mascota_id', ped.mascota_id);
                     
                 if (!other || other.length === 0) {
-                    await sbAdmin.from('clientes').delete().eq('id', ped.cliente_id);
+                    // Eliminar la mascota
+                    await sbAdmin.from('mascotas').delete().eq('id', ped.mascota_id);
+                    
+                    // Verificar si el cliente tiene otras mascotas
+                    const { data: otrasMascotas } = await sbAdmin
+                        .from('mascotas')
+                        .select('id')
+                        .eq('cliente_id', ped.cliente_id);
+                        
+                    if (!otrasMascotas || otrasMascotas.length === 0) {
+                        // Eliminar el cliente
+                        await sbAdmin.from('clientes').delete().eq('id', ped.cliente_id);
+                    }
                 }
+                
+                toast('✅ Registro eliminado');
+                await loadAdminData();
+                render();
+                
+                showLoading(false);
+                
+            } catch (err) {
+                console.error('❌ Error en deleteRegistro:', err);
+                toast('Error al eliminar: ' + err.message, 'error');
+                showLoading(false);
             }
-            
-            toast('✅ Eliminado');
-            await loadAdminData();
-            render();
         }
 
         // ═══════════════════════════════════════════════════════════════════
@@ -875,9 +921,21 @@ async function ensureClienteExists() {
         // ═══════════════════════════════════════════════════════════════════
         function render() {
             const app = document.getElementById('app');
+            
+            if (state.loading) {
+                app.innerHTML = `
+                    <div class="loading-container">
+                        <div class="spinner"></div>
+                        <p style="margin-top:1rem;color:#6b7280;">Cargando...</p>
+                    </div>
+                `;
+                return;
+            }
+            
             if (state.view === 'auth') app.innerHTML = renderAuth();
             else if (state.view === 'cliente') app.innerHTML = renderCliente();
             else if (state.view === 'admin') app.innerHTML = renderAdmin();
+            
             bindEvents();
         }
 
@@ -977,7 +1035,7 @@ async function ensureClienteExists() {
             let html = `<div class="card"><div class="card-header"><div><h2>🐾 Mis Mascotas</h2><p>${state.mascotas.length} registrada${state.mascotas.length!==1?'s':''}</p></div><button class="btn btn-primary btn-sm" id="btn-add-pet">➕ Agregar</button></div><div class="card-body">`;
             
             if (state.mascotas.length === 0) {
-                html += `<p style="text-align:center;padding:2.5rem;color:var(--gray-400)">🐕 No tienes mascotas registradas</p>`;
+                html += `<div class="empty-state"><div style="font-size:48px;">🐕</div><h3>No tienes mascotas registradas</h3><p>Agrega una mascota para comenzar</p></div>`;
             } else {
                 state.mascotas.forEach(m => {
                     const tipoIcono = m.tipo === 'Perro' ? '🐕' : '🐈';
@@ -988,6 +1046,7 @@ async function ensureClienteExists() {
                                 <div class="pet-name">${esc(m.nombre)}</div>
                                 <div class="pet-meta">${m.tipo} · ${m.raza||'Sin raza'} · ${m.peso_kg}kg · ${m.sexo} · ${m.edad_anios}a ${m.edad_meses}m</div>
                                 ${m.condicion_medica ? `<div class="pet-meta" style="color:var(--red-600)">⚠️ Condición: ${esc(m.condicion_medica)}</div>` : ''}
+                                ${m.picky_eater ? `<div class="pet-meta" style="color:var(--amber-600)">😋 Picky eater</div>` : ''}
                             </div>
                         </div>
                         <button class="btn btn-danger btn-sm" onclick="deletePet('${m.id}')">🗑️</button>
@@ -1038,7 +1097,7 @@ async function ensureClienteExists() {
             let html = `<div class="card"><div class="card-header"><div><h2>📦 Historial de Pedidos</h2><p>${state.pedidos.length} pedido${state.pedidos.length!==1?'s':''}</p></div></div><div class="card-body">`;
             
             if (state.pedidos.length === 0) {
-                html += `<p style="text-align:center;padding:2.5rem;color:var(--gray-400)">📦 No tienes pedidos aún</p>`;
+                html += `<div class="empty-state"><div style="font-size:48px;">📦</div><h3>No tienes pedidos aún</h3><p>Realiza tu primer pedido en la pestaña "Hacer Pedido"</p></div>`;
             } else {
                 state.pedidos.forEach(p => {
                     html += `<div class="sale-row">
@@ -1089,7 +1148,7 @@ async function ensureClienteExists() {
                 const q = state.search.toLowerCase();
                 return (r.cliente?.nombre_propietario||'').toLowerCase().includes(q) || 
                        (r.mascota?.nombre||'').toLowerCase().includes(q) || 
-                       r.nro_lote.toLowerCase().includes(q);
+                       (r.nro_lote||'').toLowerCase().includes(q);
             });
             
             let html = `<div class="card"><div class="card-header">
@@ -1125,7 +1184,9 @@ async function ensureClienteExists() {
                                     ${r.cliente?.email ? `<p>📧 ${esc(r.cliente.email)}</p>` : ''}
                                     ${r.cliente?.direccion ? `<p>📍 ${esc(r.cliente.direccion)}</p>` : ''}</div>
                                 <div><h4>🐕 Mascota</h4><p><strong>${esc(r.mascota?.nombre||'')} (${r.mascota?.tipo||''})</strong></p>
-                                    <p>⚖️ Peso: ${r.mascota?.peso_kg}kg · 🏃 Actividad: ${r.mascota?.actividad_fisica||''}</p></div>
+                                    <p>⚖️ Peso: ${r.mascota?.peso_kg}kg · 🏃 Actividad: ${r.mascota?.actividad_fisica||''}</p>
+                                    ${r.mascota?.picky_eater ? `<p>😋 Picky eater</p>` : ''}
+                                    ${r.mascota?.condicion_medica ? `<p>🏥 ${esc(r.mascota.condicion_medica)}</p>` : ''}</div>
                                 <div><h4>📦 Pedido</h4>
                                     <p>🍖 Sabor: ${r.sabor} · ${r.periodo_porcion} (${r.cantidad_gramos}g)</p>
                                     <p>💳 Pago: ${r.metodo_pago}</p>
@@ -1227,7 +1288,7 @@ async function ensureClienteExists() {
                     }
                 }
                 
-                toggle.addEventListener('click', () => setMode(!isLogin));
+                if (toggle) toggle.addEventListener('click', () => setMode(!isLogin));
                 
                 authForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
@@ -1235,8 +1296,9 @@ async function ensureClienteExists() {
                     const email = fd.get('email');
                     const password = fd.get('password');
                     
-                    if (isLogin) await login(email, password);
-                    else {
+                    if (isLogin) {
+                        await login(email, password);
+                    } else {
                         const nombre = fd.get('nombre');
                         const telefono = fd.get('telefono');
                         const direccion = fd.get('direccion');
@@ -1245,6 +1307,7 @@ async function ensureClienteExists() {
                 });
             }
 
+            // Tabs de navegación
             document.querySelectorAll('[data-tab]').forEach(el => {
                 el.addEventListener('click', () => {
                     state.tab = el.dataset.tab;
@@ -1252,36 +1315,51 @@ async function ensureClienteExists() {
                     state.expandedId = null;
                     state.expandedDay = null;
                     render();
-                    if (state.view === 'admin' && state.tab === 'reportes') loadReporte().then(() => render());
+                    if (state.view === 'admin' && state.tab === 'reportes') {
+                        loadReporte().then(() => render());
+                    }
                 });
             });
 
+            // Formulario de pedido
             const orderForm = document.getElementById('order-form');
             if (orderForm) {
                 orderForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const fd = new FormData(orderForm);
-                    await placeOrder(Object.fromEntries(fd));
+                    const obj = Object.fromEntries(fd);
+                    await placeOrder(obj);
                 });
             }
 
+            // Formulario de mascota
             const petForm = document.getElementById('pet-form');
             if (petForm) {
                 petForm.addEventListener('submit', async (e) => {
                     e.preventDefault();
                     const fd = new FormData(petForm);
                     const obj = Object.fromEntries(fd);
-                    obj.picky_eater = document.getElementById('picky-switch')?.classList.contains('active') ? 'true' : 'false';
+                    const switchEl = document.getElementById('picky-switch');
+                    obj.picky_eater = switchEl?.classList.contains('active') ? 'true' : 'false';
                     await savePet(obj);
                 });
             }
 
+            // Botón agregar mascota
             const addPetBtn = document.getElementById('btn-add-pet');
-            if (addPetBtn) addPetBtn.addEventListener('click', () => { state.showPetForm = true; render(); });
+            if (addPetBtn) addPetBtn.addEventListener('click', () => { 
+                state.showPetForm = true; 
+                render(); 
+            });
             
+            // Botón cancelar mascota
             const cancelPetBtn = document.getElementById('btn-cancel-pet');
-            if (cancelPetBtn) cancelPetBtn.addEventListener('click', () => { state.showPetForm = false; render(); });
+            if (cancelPetBtn) cancelPetBtn.addEventListener('click', () => { 
+                state.showPetForm = false; 
+                render(); 
+            });
 
+            // Expandir detalles de venta
             document.querySelectorAll('[data-expand]').forEach(el => {
                 el.addEventListener('click', () => {
                     state.expandedId = state.expandedId === el.dataset.expand ? null : el.dataset.expand;
@@ -1289,6 +1367,7 @@ async function ensureClienteExists() {
                 });
             });
             
+            // Expandir detalles de día
             document.querySelectorAll('[data-expand-day]').forEach(el => {
                 el.addEventListener('click', () => {
                     state.expandedDay = state.expandedDay === el.dataset.expandDay ? null : el.dataset.expandDay;
@@ -1296,32 +1375,57 @@ async function ensureClienteExists() {
                 });
             });
 
+            // Búsqueda en admin
             const searchInput = document.getElementById('admin-search');
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
                     state.search = e.target.value;
                     render();
-                    const newInput = document.getElementById('admin-search');
-                    if (newInput) { newInput.focus(); newInput.selectionStart = newInput.selectionEnd = newInput.value.length; }
                 });
             }
 
+            // Filtros de reporte
             const btnFiltrar = document.getElementById('btn-filtrar');
-            if (btnFiltrar) btnFiltrar.addEventListener('click', () => loadReporte().then(() => render()));
+            if (btnFiltrar) {
+                btnFiltrar.addEventListener('click', () => {
+                    const desde = document.getElementById('filtro-desde');
+                    const hasta = document.getElementById('filtro-hasta');
+                    state.desde = desde ? desde.value : '';
+                    state.hasta = hasta ? hasta.value : '';
+                    loadReporte().then(() => render());
+                });
+            }
             
             const btnLimpiar = document.getElementById('btn-limpiar-filtro');
-            if (btnLimpiar) btnLimpiar.addEventListener('click', () => {
-                state.desde = '';
-                state.hasta = '';
-                state.reporte = [];
-                state.resumen = { total_general: 0, total_pedidos: 0, total_dias: 0 };
-                render();
-            });
+            if (btnLimpiar) {
+                btnLimpiar.addEventListener('click', () => {
+                    state.desde = '';
+                    state.hasta = '';
+                    state.reporte = [];
+                    state.resumen = { total_general: 0, total_pedidos: 0, total_dias: 0 };
+                    render();
+                });
+            }
             
+            // Actualizar estado de filtros en tiempo real
             const desde = document.getElementById('filtro-desde');
             const hasta = document.getElementById('filtro-hasta');
             if (desde) desde.addEventListener('change', (e) => { state.desde = e.target.value; });
             if (hasta) hasta.addEventListener('change', (e) => { state.hasta = e.target.value; });
+            
+            // Switch de picky eater
+            document.querySelectorAll('.switch').forEach(el => {
+                if (!el.id || el.id !== 'picky-switch') return;
+                // Si ya tiene un evento, no lo duplicamos
+                if (el._listener) return;
+                el._listener = true;
+                el.addEventListener('click', function(e) {
+                    this.classList.toggle('active');
+                    const hidden = this.parentElement.querySelector('input[type="hidden"]');
+                    if (hidden) hidden.value = this.classList.contains('active') ? 'true' : 'false';
+                    e.stopPropagation();
+                });
+            });
         }
 
         // ═══════════════════════════════════════════════════════════════════
