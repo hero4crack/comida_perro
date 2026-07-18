@@ -39,6 +39,7 @@
             --blue-700:#1d4ed8;
             --amber-100:#fef3c7;
             --amber-600:#d97706;
+            --indigo-100:#e0e7ff;
             --radius:0.75rem;
         }
         button{cursor:pointer;font-family:inherit}
@@ -57,6 +58,8 @@
         .btn-outline{background:transparent;border:1px solid var(--gray-200);color:var(--gray-700)}.btn-outline:hover{background:var(--gray-50)}
         .btn-ghost{background:transparent;color:var(--gray-500)}.btn-ghost:hover{background:var(--gray-100)}
         .btn-danger{background:transparent;color:var(--red-600)}.btn-danger:hover{background:var(--red-100)}
+        .btn-success{background:var(--emerald-600);color:var(--white)}.btn-success:hover{background:var(--emerald-700)}
+        .btn-warning{background:var(--amber-600);color:var(--white)}.btn-warning:hover{background:var(--amber-700)}
         .btn-sm{padding:0.3rem 0.65rem;font-size:0.8rem}
         .btn-icon{font-size:1rem}
         .card{background:var(--white);border:1px solid var(--gray-200);border-radius:0.75rem;overflow:hidden}
@@ -70,17 +73,18 @@
         .form-row{display:grid;gap:0.75rem}
         .form-row-2{grid-template-columns:1fr 1fr}
         .form-row-3{grid-template-columns:1fr 1fr 1fr}
-        @media(max-width:640px){.form-row-2,.form-row-3{grid-template-columns:1fr}}
+        .form-row-4{grid-template-columns:1fr 1fr 1fr 1fr}
+        @media(max-width:640px){.form-row-2,.form-row-3,.form-row-4{grid-template-columns:1fr}}
         .auth-page{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem 1rem;background:linear-gradient(135deg,var(--emerald-50),var(--white))}
         .auth-card{width:100%;max-width:400px;background:var(--white);border-radius:0.75rem;box-shadow:0 10px 40px rgba(0,0,0,.08);border:1px solid var(--gray-200)}
         .auth-card .card-header{text-align:center;padding:1.5rem 1.5rem 0.5rem}
         .auth-card .card-body{padding:0.5rem 1.5rem 1.5rem}
         .auth-toggle{text-align:center;margin-top:1rem;font-size:0.8rem}
-        .tabs{display:flex;gap:0;border-bottom:2px solid var(--gray-200);margin-bottom:1.5rem}
-        .tab{padding:0.6rem 1rem;font-size:0.8rem;font-weight:500;color:var(--gray-500);border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:all .15s}
+        .tabs{display:flex;gap:0;border-bottom:2px solid var(--gray-200);margin-bottom:1.5rem;overflow-x:auto}
+        .tab{padding:0.6rem 1rem;font-size:0.8rem;font-weight:500;color:var(--gray-500);border:none;background:none;border-bottom:2px solid transparent;margin-bottom:-2px;cursor:pointer;transition:all .15s;white-space:nowrap}
         .tab:hover{color:var(--gray-700)}
         .tab.active{color:var(--emerald-600);border-bottom-color:var(--emerald-600);font-weight:600}
-        .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:9999px;font-size:0.7rem;font-weight:500;gap:3px}
+        .badge{display:inline-flex;align-items:center;padding:2px 10px;border-radius:9999px;font-size:0.7rem;font-weight:600;gap:4px}
         .badge-default{background:var(--gray-200);color:var(--gray-700)}
         .badge-red{background:var(--red-100);color:var(--red-800)}
         .badge-yellow{background:var(--yellow-100);color:var(--yellow-800)}
@@ -89,12 +93,16 @@
         .badge-green{background:var(--green-100);color:var(--green-700)}
         .badge-blue{background:var(--blue-100);color:var(--blue-700)}
         .badge-amber{background:var(--amber-100);color:var(--amber-600)}
+        .badge-pending{background:var(--yellow-100);color:var(--yellow-800)}
+        .badge-progress{background:var(--blue-100);color:var(--blue-700)}
+        .badge-completed{background:var(--green-100);color:var(--green-700)}
         .sale-row{border:1px solid var(--gray-200);border-radius:0.5rem;margin-bottom:0.5rem;overflow:hidden;background:var(--white)}
         .sale-row-header{display:flex;flex-wrap:wrap;align-items:center;gap:0.5rem;padding:0.75rem 1rem;cursor:pointer;transition:background .1s}
         .sale-row-header:hover{background:var(--gray-50)}
         .sale-row-header .lote{font-family:monospace;font-size:0.7rem;background:var(--gray-100);padding:2px 6px;border-radius:4px}
         .sale-row-header .propietario{font-weight:600;font-size:0.85rem}
         .sale-row-header .monto{margin-left:auto;font-weight:700;color:var(--emerald-700);font-size:0.9rem}
+        .sale-row-header .monto-pending{color:var(--gray-400)}
         .sale-row-detail{border-top:1px solid var(--gray-100);padding:1rem;background:var(--gray-50);display:none}
         .sale-row-detail.open{display:block}
         .sale-row-detail .detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem}
@@ -107,9 +115,11 @@
         .pet-card .pet-meta{font-size:0.7rem;color:var(--gray-500);margin-top:2px}
         .empty-state{text-align:center;padding:3rem 1rem;color:var(--gray-400)}
         .empty-state h3{font-size:1rem;font-weight:600;color:var(--gray-600);margin-bottom:0.5rem}
-        .toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:0.75rem 1.25rem;border-radius:var(--radius);font-size:0.85rem;color:var(--white);z-index:9999;animation:fadeIn .3s}
+        .empty-state .icon-big{font-size:48px;margin-bottom:1rem}
+        .toast{position:fixed;bottom:1.5rem;right:1.5rem;padding:0.75rem 1.25rem;border-radius:var(--radius);font-size:0.85rem;color:var(--white);z-index:9999;animation:fadeIn .3s;max-width:90vw}
         .toast-success{background:var(--emerald-600)}
         .toast-error{background:var(--red-600)}
+        .toast-info{background:var(--blue-700)}
         @keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
         .loading{text-align:center;padding:3rem}
         .spinner{width:24px;height:24px;border:3px solid var(--gray-200);border-top-color:var(--emerald-500);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto}
@@ -119,8 +129,8 @@
         .switch.active{background:var(--emerald-500)}
         .switch::after{content:'';position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:var(--white);transition:transform .2s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
         .switch.active::after{transform:translateX(18px)}
-        .summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem}
-        @media(max-width:640px){.summary-grid{grid-template-columns:1fr}}
+        .summary-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1rem;margin-bottom:1.5rem}
+        @media(max-width:640px){.summary-grid{grid-template-columns:1fr 1fr}}
         .summary-card{background:var(--white);border:1px solid var(--gray-200);border-radius:0.75rem;padding:1.25rem;display:flex;align-items:center;gap:0.75rem}
         .summary-card .icon{width:40px;height:40px;border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:20px}
         .summary-card .value{font-size:1.4rem;font-weight:700}
@@ -131,7 +141,7 @@
         td{padding:0.6rem 0.75rem;border-bottom:1px solid var(--gray-100)}
         tr:hover{background:var(--gray-50)}
         .day-card{border:1px solid var(--gray-200);border-radius:0.5rem;margin-bottom:0.5rem;overflow:hidden;background:var(--white)}
-        .day-card-header{display:flex;align-items:center;gap:1rem;padding:1rem;cursor:pointer;transition:background .1s}
+        .day-card-header{display:flex;align-items:center;gap:1rem;padding:1rem;cursor:pointer;transition:background .1s;flex-wrap:wrap}
         .day-card-header:hover{background:var(--gray-50)}
         .day-card-header .fecha{font-weight:600;min-width:90px}
         .day-card-header .ventas{color:var(--green-700);font-weight:600;min-width:80px}
@@ -145,6 +155,18 @@
         select.form-control{appearance:auto}
         .admin-badge{display:inline-flex;align-items:center;gap:4px;background:var(--purple-100);color:var(--purple-800);padding:2px 10px;border-radius:9999px;font-size:0.7rem;font-weight:600}
         .loading-container{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;padding:2rem}
+        .status-actions{display:flex;gap:0.3rem;flex-wrap:wrap}
+        .filter-status{display:flex;gap:0.3rem;flex-wrap:wrap}
+        .filter-status .btn{font-size:0.75rem;padding:0.25rem 0.75rem}
+        .filter-status .btn.active{background:var(--emerald-600);color:var(--white);border-color:var(--emerald-600)}
+        .stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:0.5rem;margin-bottom:1rem}
+        .stat-item{background:var(--gray-50);padding:0.5rem 1rem;border-radius:0.5rem;text-align:center}
+        .stat-item .stat-value{font-weight:700;font-size:1.1rem}
+        .stat-item .stat-label{font-size:0.7rem;color:var(--gray-500)}
+        .stat-item.pending .stat-value{color:var(--yellow-800)}
+        .stat-item.progress .stat-value{color:var(--blue-700)}
+        .stat-item.completed .stat-value{color:var(--green-700)}
+        .stat-item.total .stat-value{color:var(--emerald-700)}
     </style>
 </head>
 <body>
@@ -198,7 +220,27 @@
             showPetForm: false,
             expandedId: null,
             expandedDay: null,
-            loading: false
+            loading: false,
+            statusFilter: 'todos'
+        };
+
+        // Estados posibles
+        const ESTADOS = {
+            PENDIENTE: 'pendiente',
+            PROCESO: 'en proceso',
+            COMPLETADO: 'completado'
+        };
+
+        const ESTADO_BADGE = {
+            'pendiente': 'badge-pending',
+            'en proceso': 'badge-progress',
+            'completado': 'badge-completed'
+        };
+
+        const ESTADO_ICON = {
+            'pendiente': '⏳',
+            'en proceso': '🔄',
+            'completado': '✅'
         };
 
         const SABOR_COLOR = { 'Carne': 'badge-red', 'Pollo': 'badge-yellow', 'Mixta': 'badge-orange', 'Personalizada': 'badge-purple' };
@@ -295,7 +337,6 @@
             render();
         }
 
-        // Escuchar cambios de autenticación
         sb.auth.onAuthStateChange(async (event, session) => {
             console.log('🔄 Cambio de estado auth:', event);
             
@@ -355,7 +396,6 @@
                 state.user = data.user;
                 console.log('👤 Usuario logueado:', state.user.email);
                 
-                // Asegurar que el cliente existe
                 const clienteOk = await ensureClienteExists();
                 if (!clienteOk) {
                     console.error('❌ Error al asegurar la existencia del cliente');
@@ -398,7 +438,6 @@
             showLoading(true);
             
             try {
-                // 1. Registrar usuario
                 const { data, error } = await sb.auth.signUp({
                     email,
                     password,
@@ -426,10 +465,8 @@
 
                 console.log('✅ Usuario registrado:', data.user.id);
                 
-                // 2. Esperar un momento para que el usuario se cree en la base de datos
                 await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                // 3. Crear perfil en clientes
                 const { error: clienteError } = await sbAdmin
                     .from('clientes')
                     .insert([{
@@ -448,7 +485,6 @@
                     return;
                 }
 
-                // 4. Crear perfil en profiles
                 const { error: profileError } = await sbAdmin
                     .from('profiles')
                     .insert([{
@@ -464,7 +500,6 @@
                 toast('✅ Cuenta creada exitosamente. Por favor inicia sesión.', 'success');
                 showLoading(false);
                 
-                // Cambiar a modo login
                 const toggle = document.getElementById('auth-toggle-link');
                 if (toggle) toggle.click();
                 
@@ -550,7 +585,6 @@
             console.log('📊 Cargando datos del cliente:', uid);
             
             try {
-                // Cargar mascotas
                 const { data: mascotas, error: mErr } = await sbAdmin
                     .from('mascotas')
                     .select('*')
@@ -564,7 +598,6 @@
                     state.mascotas = mascotas || [];
                 }
                 
-                // Cargar pedidos con relación a mascotas
                 const { data: pedidos, error: pErr } = await sbAdmin
                     .from('pedidos')
                     .select('*, mascota:mascotas(id,nombre,tipo,raza,peso_kg)')
@@ -604,6 +637,12 @@
                     state.allPedidos = [];
                 } else {
                     state.allPedidos = data || [];
+                    // Asegurar que todos los pedidos tengan un estado
+                    state.allPedidos.forEach(p => {
+                        if (!p.estado) {
+                            p.estado = ESTADOS.PENDIENTE;
+                        }
+                    });
                 }
                 
                 console.log(`📊 ${state.allPedidos.length} pedidos cargados`);
@@ -615,6 +654,7 @@
 
         async function loadReporte() {
             try {
+                // Solo contar pedidos COMPLETADOS para el reporte de ventas
                 let q = sbAdmin
                     .from('pedidos')
                     .select(`
@@ -622,6 +662,7 @@
                         cliente:clientes(id,nombre_propietario,email,telefono),
                         mascota:mascotas(id,nombre,tipo,raza)
                     `)
+                    .eq('estado', ESTADOS.COMPLETADO)
                     .order('fecha_entrega', { ascending: true });
                 
                 if (state.desde) q = q.gte('fecha_entrega', state.desde);
@@ -675,7 +716,6 @@
             showLoading(true);
             
             try {
-                // Validar que el cliente existe
                 const clienteOk = await ensureClienteExists();
                 if (!clienteOk) {
                     toast('Error al verificar el cliente. Intenta de nuevo.', 'error');
@@ -683,7 +723,6 @@
                     return;
                 }
 
-                // Verificar cliente en base de datos
                 const { data: cliente, error: clienteCheck } = await sbAdmin
                     .from('clientes')
                     .select('id')
@@ -697,7 +736,6 @@
                     return;
                 }
 
-                // Crear la mascota
                 const mascotaData = {
                     cliente_id: state.user.id,
                     nombre: form.nombre, 
@@ -744,7 +782,6 @@
             }
         }
 
-        // ⭐ FUNCIÓN CORREGIDA - ELIMINAR MASCOTA
         async function deletePet(id) {
             if (!confirm('⚠️ ¿Eliminar esta mascota y todos sus pedidos asociados?')) {
                 return;
@@ -754,7 +791,6 @@
             console.log('🗑️ Eliminando mascota:', id);
             
             try {
-                // 1. Verificar que la mascota existe
                 const { data: mascota, error: mascotaCheck } = await sbAdmin
                     .from('mascotas')
                     .select('id, nombre')
@@ -768,8 +804,6 @@
                     return;
                 }
                 
-                // 2. Eliminar pedidos asociados
-                console.log(`📦 Eliminando pedidos de la mascota: ${mascota.nombre}`);
                 const { error: pedidosErr } = await sbAdmin
                     .from('pedidos')
                     .delete()
@@ -782,8 +816,6 @@
                     return;
                 }
                 
-                // 3. Eliminar la mascota
-                console.log(`🗑️ Eliminando mascota: ${mascota.nombre}`);
                 const { error: mascotaErr } = await sbAdmin
                     .from('mascotas')
                     .delete()
@@ -798,13 +830,10 @@
                 
                 console.log('✅ Mascota y pedidos eliminados correctamente');
                 
-                // 4. Actualizar estado local
                 state.mascotas = state.mascotas.filter(m => m.id !== id);
                 state.pedidos = state.pedidos.filter(p => p.mascota_id !== id);
                 
-                // 5. Si el usuario está en la vista de pedidos, actualizar
                 if (state.tab === 'pedir') {
-                    // Recargar datos para actualizar el formulario
                     await loadClienteData();
                 }
                 
@@ -821,43 +850,94 @@
         }
 
         async function placeOrder(form) {
-            showLoading(true);
+    showLoading(true);
+    
+    try {
+        const pedidoData = {
+            cliente_id: state.user.id,
+            mascota_id: form.mascota_id,
+            sabor: form.sabor,
+            periodo_porcion: form.periodo_porcion,
+            cantidad_gramos: parseInt(form.cantidad_gramos) || 0,
+            metodo_pago: form.metodo_pago,
+            fecha_entrega: form.fecha_entrega,
+            nro_lote: form.nro_lote,
+            monto_total: parseFloat(form.monto_total) || 0,
+            estado: 'pendiente' // Usar string literal, el tipo ENUM lo convierte
+        };
+        
+        console.log('📝 Creando pedido:', pedidoData);
+        
+        const { data, error } = await sbAdmin
+            .from('pedidos')
+            .insert([pedidoData])
+            .select();
             
-            try {
-                const { error } = await sbAdmin
-                    .from('pedidos')
-                    .insert([{
-                        cliente_id: state.user.id,
-                        mascota_id: form.mascota_id,
-                        sabor: form.sabor,
-                        periodo_porcion: form.periodo_porcion,
-                        cantidad_gramos: parseInt(form.cantidad_gramos) || 0,
-                        metodo_pago: form.metodo_pago,
-                        fecha_entrega: form.fecha_entrega,
-                        nro_lote: form.nro_lote,
-                        monto_total: parseFloat(form.monto_total) || 0,
-                    }]);
-                    
-                if (error) {
-                    console.error('❌ Error creando pedido:', error);
-                    toast(error.message, 'error');
-                    showLoading(false);
-                    return;
-                }
-                
-                toast('✅ Pedido realizado exitosamente');
-                state.tab = 'historial';
-                await loadClienteData();
-                render();
-                
-                showLoading(false);
-                
-            } catch (err) {
-                console.error('❌ Error en placeOrder:', err);
-                toast('Error al realizar pedido: ' + err.message, 'error');
-                showLoading(false);
-            }
+        if (error) {
+            console.error('❌ Error creando pedido:', error);
+            toast(error.message, 'error');
+            showLoading(false);
+            return;
         }
+        
+        console.log('✅ Pedido creado:', data);
+        toast('✅ Pedido realizado exitosamente (Estado: Pendiente)');
+        state.tab = 'historial';
+        await loadClienteData();
+        render();
+        
+        showLoading(false);
+        
+    } catch (err) {
+        console.error('❌ Error en placeOrder:', err);
+        toast('Error al realizar pedido: ' + err.message, 'error');
+        showLoading(false);
+    }
+}
+
+        // ⭐ FUNCIÓN CORREGIDA - Actualizar estado de un pedido
+        async function updateOrderStatus(orderId, nuevoEstado) {
+    showLoading(true);
+    
+    try {
+        console.log(`📝 Intentando actualizar pedido ${orderId} a estado: ${nuevoEstado}`);
+        
+        // Usar la función RPC en lugar de update directo
+        const { data, error } = await sbAdmin.rpc('actualizar_estado_pedido', {
+            p_pedido_id: orderId,
+            p_nuevo_estado: nuevoEstado
+        });
+        
+        if (error) {
+            console.error('❌ Error actualizando estado:', error);
+            toast('Error al actualizar estado: ' + error.message, 'error');
+            showLoading(false);
+            return;
+        }
+        
+        console.log('✅ Estado actualizado:', data);
+        
+        // Recargar datos
+        await loadAdminData();
+        
+        if (state.tab === 'reportes') {
+            await loadReporte();
+        }
+        
+        const estadoLabel = nuevoEstado === ESTADOS.PENDIENTE ? 'Pendiente' :
+                           nuevoEstado === ESTADOS.PROCESO ? 'En Proceso' : 'Completado';
+        
+        toast(`✅ Estado actualizado a: ${estadoLabel}`, 'success');
+        render();
+        
+        showLoading(false);
+        
+    } catch (err) {
+        console.error('❌ Error en updateOrderStatus:', err);
+        toast('Error al actualizar estado: ' + err.message, 'error');
+        showLoading(false);
+    }
+}
 
         async function deleteRegistro(id) {
             if (!confirm('¿Eliminar este registro?')) return;
@@ -878,27 +958,22 @@
                     return;
                 }
                 
-                // Eliminar pedido
                 await sbAdmin.from('pedidos').delete().eq('id', id);
                 
-                // Verificar si la mascota tiene otros pedidos
                 const { data: other } = await sbAdmin
                     .from('pedidos')
                     .select('id')
                     .eq('mascota_id', ped.mascota_id);
                     
                 if (!other || other.length === 0) {
-                    // Eliminar la mascota
                     await sbAdmin.from('mascotas').delete().eq('id', ped.mascota_id);
                     
-                    // Verificar si el cliente tiene otras mascotas
                     const { data: otrasMascotas } = await sbAdmin
                         .from('mascotas')
                         .select('id')
                         .eq('cliente_id', ped.cliente_id);
                         
                     if (!otrasMascotas || otrasMascotas.length === 0) {
-                        // Eliminar el cliente
                         await sbAdmin.from('clientes').delete().eq('id', ped.cliente_id);
                     }
                 }
@@ -1001,7 +1076,7 @@
         function renderPedidoForm() {
             if (state.mascotas.length === 0) return `
                 <div class="card"><div class="card-body">
-                    <div class="empty-state"><div style="font-size:48px;">🐕</div><h3>Primero registra tu mascota</h3>
+                    <div class="empty-state"><div class="icon-big">🐕</div><h3>Primero registra tu mascota</h3>
                     <p style="margin-bottom:1rem">Necesitas al menos una mascota para hacer un pedido</p>
                     <button class="btn btn-outline" onclick="state.tab='mascotas';render()">🐾 Ir a Mis Mascotas</button></div>
                 </div></div>`;
@@ -1025,6 +1100,9 @@
                             <div class="form-group"><label>🔢 Nro. Lote *</label><input name="nro_lote" class="form-control" placeholder="Ej: LOT-001" required></div>
                         </div>
                         <div class="form-group"><label>💰 Monto Total ($) *</label><input type="number" step="0.01" name="monto_total" class="form-control" style="max-width:200px" min="0" placeholder="0.00" required></div>
+                        <div class="form-group" style="background:var(--gray-50);padding:0.5rem 1rem;border-radius:var(--radius);font-size:0.85rem;color:var(--gray-500)">
+                            ⏳ El pedido se creará con estado <strong>Pendiente</strong>
+                        </div>
                         <button type="submit" class="btn btn-primary">✅ Realizar Pedido</button>
                     </form>
                 </div>
@@ -1035,7 +1113,7 @@
             let html = `<div class="card"><div class="card-header"><div><h2>🐾 Mis Mascotas</h2><p>${state.mascotas.length} registrada${state.mascotas.length!==1?'s':''}</p></div><button class="btn btn-primary btn-sm" id="btn-add-pet">➕ Agregar</button></div><div class="card-body">`;
             
             if (state.mascotas.length === 0) {
-                html += `<div class="empty-state"><div style="font-size:48px;">🐕</div><h3>No tienes mascotas registradas</h3><p>Agrega una mascota para comenzar</p></div>`;
+                html += `<div class="empty-state"><div class="icon-big">🐕</div><h3>No tienes mascotas registradas</h3><p>Agrega una mascota para comenzar</p></div>`;
             } else {
                 state.mascotas.forEach(m => {
                     const tipoIcono = m.tipo === 'Perro' ? '🐕' : '🐈';
@@ -1097,19 +1175,20 @@
             let html = `<div class="card"><div class="card-header"><div><h2>📦 Historial de Pedidos</h2><p>${state.pedidos.length} pedido${state.pedidos.length!==1?'s':''}</p></div></div><div class="card-body">`;
             
             if (state.pedidos.length === 0) {
-                html += `<div class="empty-state"><div style="font-size:48px;">📦</div><h3>No tienes pedidos aún</h3><p>Realiza tu primer pedido en la pestaña "Hacer Pedido"</p></div>`;
+                html += `<div class="empty-state"><div class="icon-big">📦</div><h3>No tienes pedidos aún</h3><p>Realiza tu primer pedido en la pestaña "Hacer Pedido"</p></div>`;
             } else {
                 state.pedidos.forEach(p => {
+                    const estado = p.estado || ESTADOS.PENDIENTE;
                     html += `<div class="sale-row">
                         <div class="sale-row-header">
                             <span class="lote">🔢 ${esc(p.nro_lote)}</span>
                             <span class="propietario">${esc(p.mascota?.nombre||'-')}</span>
                             <span class="badge ${SABOR_COLOR[p.sabor]||''}">🍖 ${p.sabor}</span>
-                            <span class="badge badge-default">📦 ${p.periodo_porcion}</span>
+                            <span class="badge ${ESTADO_BADGE[estado] || 'badge-default'}">${ESTADO_ICON[estado] || '📌'} ${estado.charAt(0).toUpperCase() + estado.slice(1)}</span>
                             <span style="font-size:0.75rem;color:var(--gray-500)">⚖️ ${p.cantidad_gramos}g</span>
                             <span style="font-size:0.75rem;color:var(--gray-500)">💳 ${p.metodo_pago}</span>
                             <span style="font-size:0.75rem;color:var(--gray-500)">📅 Entrega: ${p.fecha_entrega}</span>
-                            <span class="monto">💰 $${Number(p.monto_total).toFixed(2)}</span>
+                            <span class="monto ${estado !== ESTADOS.COMPLETADO ? 'monto-pending' : ''}">💰 $${Number(p.monto_total).toFixed(2)} ${estado !== ESTADOS.COMPLETADO ? '(Pendiente)' : ''}</span>
                         </div>
                     </div>`;
                 });
@@ -1150,30 +1229,70 @@
                        (r.mascota?.nombre||'').toLowerCase().includes(q) || 
                        (r.nro_lote||'').toLowerCase().includes(q);
             });
+
+            // Filtrar por estado
+            const statusFiltered = state.statusFilter === 'todos' ? filtered : 
+                filtered.filter(r => (r.estado || ESTADOS.PENDIENTE) === state.statusFilter);
+
+            // Estadísticas
+            const totalPedidos = filtered.length;
+            const pendientes = filtered.filter(r => (r.estado || ESTADOS.PENDIENTE) === ESTADOS.PENDIENTE).length;
+            const enProceso = filtered.filter(r => r.estado === ESTADOS.PROCESO).length;
+            const completados = filtered.filter(r => r.estado === ESTADOS.COMPLETADO).length;
             
-            let html = `<div class="card"><div class="card-header">
-                <div style="display:flex;align-items:center;gap:0.75rem">
-                    <div style="width:36px;height:36px;border-radius:8px;background:var(--emerald-100);display:flex;align-items:center;justify-content:center;font-size:18px;">🛒</div>
-                    <div><h2>Todas las Ventas</h2><p>${filtered.length} registros</p></div>
+            // Solo contar dinero de completados
+            const totalCompletados = filtered
+                .filter(r => r.estado === ESTADOS.COMPLETADO)
+                .reduce((sum, r) => sum + Number(r.monto_total), 0);
+
+            let html = `
+            <div class="card">
+                <div class="card-header">
+                    <div style="display:flex;align-items:center;gap:0.75rem">
+                        <div style="width:36px;height:36px;border-radius:8px;background:var(--emerald-100);display:flex;align-items:center;justify-content:center;font-size:18px;">🛒</div>
+                        <div><h2>Todas las Ventas</h2><p>${statusFiltered.length} registros (${totalPedidos} total)</p></div>
+                    </div>
+                    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;align-items:center;">
+                        <input type="text" class="search-input" id="admin-search" placeholder="🔍 Buscar..." value="${esc(state.search)}">
+                    </div>
                 </div>
-                <input type="text" class="search-input" id="admin-search" placeholder="🔍 Buscar..." value="${esc(state.search)}">
-            </div><div class="card-body">`;
+                <div class="card-body">
+                    <div class="stats-row">
+                        <div class="stat-item total"><div class="stat-value">$${totalCompletados.toFixed(2)}</div><div class="stat-label">💰 Total (Completados)</div></div>
+                        <div class="stat-item pending"><div class="stat-value">${pendientes}</div><div class="stat-label">⏳ Pendientes</div></div>
+                        <div class="stat-item progress"><div class="stat-value">${enProceso}</div><div class="stat-label">🔄 En Proceso</div></div>
+                        <div class="stat-item completed"><div class="stat-value">${completados}</div><div class="stat-label">✅ Completados</div></div>
+                    </div>
+                    
+                    <div class="filter-status" style="margin-bottom:1rem;">
+                        <button class="btn btn-sm ${state.statusFilter === 'todos' ? 'active' : 'btn-outline'}" data-status="todos">📋 Todos</button>
+                        <button class="btn btn-sm ${state.statusFilter === 'pendiente' ? 'active' : 'btn-outline'}" data-status="pendiente">⏳ Pendientes</button>
+                        <button class="btn btn-sm ${state.statusFilter === 'en proceso' ? 'active' : 'btn-outline'}" data-status="en proceso">🔄 En Proceso</button>
+                        <button class="btn btn-sm ${state.statusFilter === 'completado' ? 'active' : 'btn-outline'}" data-status="completado">✅ Completados</button>
+                    </div>`;
             
-            if (filtered.length === 0) {
+            if (statusFiltered.length === 0) {
                 html += `<div class="empty-state"><p>${state.search ? '🔍 Sin resultados' : '📦 No hay ventas registradas'}</p></div>`;
             } else {
-                filtered.forEach(r => {
+                statusFiltered.forEach(r => {
+                    const estado = r.estado || ESTADOS.PENDIENTE;
                     const isOpen = state.expandedId === r.id;
-                    html += `<div class="sale-row">
+                    const isCompleted = estado === ESTADOS.COMPLETADO;
+                    
+                    html += `<div class="sale-row" style="${isCompleted ? 'border-left:4px solid var(--emerald-500);' : ''}">
                         <div class="sale-row-header" data-expand="${r.id}">
                             <span class="lote">🔢 ${esc(r.nro_lote)}</span>
                             <span class="propietario">${esc(r.cliente?.nombre_propietario||'')}</span>
                             <span style="color:var(--gray-400)">/</span>
                             <span>${esc(r.mascota?.nombre||'')}</span>
                             <span class="badge ${SABOR_COLOR[r.sabor]||''}">🍖 ${r.sabor}</span>
-                            <span class="badge badge-default">📦 ${r.periodo_porcion}</span>
-                            <span style="font-size:0.75rem;color:var(--gray-500)">⚖️ ${r.cantidad_gramos}g</span>
-                            <span class="monto">💰 $${Number(r.monto_total).toFixed(2)}</span>
+                            <span class="badge ${ESTADO_BADGE[estado] || 'badge-default'}">${ESTADO_ICON[estado] || '📌'} ${estado.charAt(0).toUpperCase() + estado.slice(1)}</span>
+                            <span class="monto ${!isCompleted ? 'monto-pending' : ''}">💰 $${Number(r.monto_total).toFixed(2)}</span>
+                            <div class="status-actions">
+                                ${estado === ESTADOS.PENDIENTE ? `<button class="btn btn-warning btn-sm" onclick="event.stopPropagation();updateOrderStatus('${r.id}','${ESTADOS.PROCESO}')">🔄 Procesar</button>` : ''}
+                                ${estado === ESTADOS.PROCESO ? `<button class="btn btn-success btn-sm" onclick="event.stopPropagation();updateOrderStatus('${r.id}','${ESTADOS.COMPLETADO}')">✅ Completar</button>` : ''}
+                                ${estado === ESTADOS.COMPLETADO ? `<span style="font-size:0.7rem;color:var(--green-700)">✅ Completado</span>` : ''}
+                            </div>
                             <button class="btn btn-danger btn-sm" onclick="event.stopPropagation();deleteRegistro('${r.id}')">🗑️</button>
                             <span style="font-size:0.7rem;color:var(--gray-400)">${isOpen?'▲':'▼'}</span>
                         </div>
@@ -1191,7 +1310,9 @@
                                     <p>🍖 Sabor: ${r.sabor} · ${r.periodo_porcion} (${r.cantidad_gramos}g)</p>
                                     <p>💳 Pago: ${r.metodo_pago}</p>
                                     <p>📅 Entrega: ${r.fecha_entrega}</p>
-                                    <div class="monto-big">💰 $${Number(r.monto_total).toFixed(2)}</div></div>
+                                    <p>📌 Estado: <span class="badge ${ESTADO_BADGE[estado] || 'badge-default'}">${ESTADO_ICON[estado] || '📌'} ${estado.charAt(0).toUpperCase() + estado.slice(1)}</span></p>
+                                    <div class="monto-big">💰 $${Number(r.monto_total).toFixed(2)} ${!isCompleted ? '(Pendiente)' : ''}</div>
+                                </div>
                             </div>
                         </div>
                     </div>`;
@@ -1207,12 +1328,13 @@
                 <div class="summary-card"><div class="icon" style="background:var(--green-100)">💰</div><div><div class="label">Total Ventas</div><div class="value">$${state.resumen.total_general.toFixed(2)}</div></div></div>
                 <div class="summary-card"><div class="icon" style="background:var(--blue-100)">📦</div><div><div class="label">Total Pedidos</div><div class="value">${state.resumen.total_pedidos}</div></div></div>
                 <div class="summary-card"><div class="icon" style="background:var(--purple-100)">📅</div><div><div class="label">Días con Ventas</div><div class="value">${state.resumen.total_dias}</div></div></div>
+                <div class="summary-card"><div class="icon" style="background:var(--amber-100)">✅</div><div><div class="label">Solo Completados</div><div class="value" style="font-size:0.8rem">Pedidos finalizados</div></div></div>
             </div>
             <div class="card">
                 <div class="card-header">
                     <div style="display:flex;align-items:center;gap:0.75rem">
                         <div style="width:36px;height:36px;border-radius:8px;background:var(--indigo-100);display:flex;align-items:center;justify-content:center;font-size:18px;">📊</div>
-                        <h2>Ventas por Día</h2>
+                        <h2>Ventas por Día (Solo completados)</h2>
                     </div>
                 </div>
                 <div class="card-body">
@@ -1221,7 +1343,10 @@
                         <div class="form-group" style="margin:0"><label>📅 Hasta</label><input type="date" class="form-control" id="filtro-hasta" value="${state.hasta}" style="width:160px"></div>
                         <button class="btn btn-outline btn-sm" id="btn-filtrar">📊 Filtrar</button>
                         ${(state.desde||state.hasta) ? `<button class="btn btn-ghost btn-sm" id="btn-limpiar-filtro">✖️ Limpiar</button>` : ''}
-                    </div>`;
+                    </div>
+                    <p style="font-size:0.8rem;color:var(--gray-400);margin-bottom:1rem;">
+                        ⚠️ Solo se contabilizan pedidos con estado <strong>"Completado"</strong>
+                    </p>`;
             
             if (state.reporte.length === 0) {
                 html += `<div class="empty-state"><p>${(state.desde||state.hasta) ? '📅 Sin datos para el período' : '📅 Selecciona un rango de fechas y haz clic en Filtrar'}</p></div>`;
@@ -1307,13 +1432,13 @@
                 });
             }
 
-            // Tabs de navegación
             document.querySelectorAll('[data-tab]').forEach(el => {
                 el.addEventListener('click', () => {
                     state.tab = el.dataset.tab;
                     state.showPetForm = false;
                     state.expandedId = null;
                     state.expandedDay = null;
+                    state.statusFilter = 'todos';
                     render();
                     if (state.view === 'admin' && state.tab === 'reportes') {
                         loadReporte().then(() => render());
@@ -1321,7 +1446,14 @@
                 });
             });
 
-            // Formulario de pedido
+            // Filtros de estado en admin
+            document.querySelectorAll('[data-status]').forEach(el => {
+                el.addEventListener('click', () => {
+                    state.statusFilter = el.dataset.status;
+                    render();
+                });
+            });
+
             const orderForm = document.getElementById('order-form');
             if (orderForm) {
                 orderForm.addEventListener('submit', async (e) => {
@@ -1332,7 +1464,6 @@
                 });
             }
 
-            // Formulario de mascota
             const petForm = document.getElementById('pet-form');
             if (petForm) {
                 petForm.addEventListener('submit', async (e) => {
@@ -1345,21 +1476,18 @@
                 });
             }
 
-            // Botón agregar mascota
             const addPetBtn = document.getElementById('btn-add-pet');
             if (addPetBtn) addPetBtn.addEventListener('click', () => { 
                 state.showPetForm = true; 
                 render(); 
             });
             
-            // Botón cancelar mascota
             const cancelPetBtn = document.getElementById('btn-cancel-pet');
             if (cancelPetBtn) cancelPetBtn.addEventListener('click', () => { 
                 state.showPetForm = false; 
                 render(); 
             });
 
-            // Expandir detalles de venta
             document.querySelectorAll('[data-expand]').forEach(el => {
                 el.addEventListener('click', () => {
                     state.expandedId = state.expandedId === el.dataset.expand ? null : el.dataset.expand;
@@ -1367,7 +1495,6 @@
                 });
             });
             
-            // Expandir detalles de día
             document.querySelectorAll('[data-expand-day]').forEach(el => {
                 el.addEventListener('click', () => {
                     state.expandedDay = state.expandedDay === el.dataset.expandDay ? null : el.dataset.expandDay;
@@ -1375,7 +1502,6 @@
                 });
             });
 
-            // Búsqueda en admin
             const searchInput = document.getElementById('admin-search');
             if (searchInput) {
                 searchInput.addEventListener('input', (e) => {
@@ -1384,7 +1510,6 @@
                 });
             }
 
-            // Filtros de reporte
             const btnFiltrar = document.getElementById('btn-filtrar');
             if (btnFiltrar) {
                 btnFiltrar.addEventListener('click', () => {
@@ -1407,16 +1532,13 @@
                 });
             }
             
-            // Actualizar estado de filtros en tiempo real
             const desde = document.getElementById('filtro-desde');
             const hasta = document.getElementById('filtro-hasta');
             if (desde) desde.addEventListener('change', (e) => { state.desde = e.target.value; });
             if (hasta) hasta.addEventListener('change', (e) => { state.hasta = e.target.value; });
             
-            // Switch de picky eater
             document.querySelectorAll('.switch').forEach(el => {
                 if (!el.id || el.id !== 'picky-switch') return;
-                // Si ya tiene un evento, no lo duplicamos
                 if (el._listener) return;
                 el._listener = true;
                 el.addEventListener('click', function(e) {
