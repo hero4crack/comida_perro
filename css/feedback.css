@@ -1,0 +1,55 @@
+/* ═══════════════════════════════════════════════════════════════════
+   FEEDBACK — Toasts, spinners y estados de carga
+   ═══════════════════════════════════════════════════════════════════ */
+
+/* Toast notifications */
+.toast {
+    position: fixed;
+    bottom: 1.5rem;
+    right: 1.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: var(--radius);
+    font-size: 0.85rem;
+    color: var(--white);
+    z-index: 9999;
+    animation: fadeIn .3s;
+    max-width: 90vw;
+}
+
+.toast-success { background: var(--emerald-600); }
+.toast-error   { background: var(--red-600); }
+.toast-info    { background: var(--blue-700); }
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Loading states */
+.loading {
+    text-align: center;
+    padding: 3rem;
+}
+
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 2rem;
+}
+
+.spinner {
+    width: 24px;
+    height: 24px;
+    border: 3px solid var(--gray-200);
+    border-top-color: var(--emerald-500);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}

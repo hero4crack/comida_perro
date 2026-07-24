@@ -1,0 +1,17 @@
+/* ═══════════════════════════════════════════════════════════════════
+   RESPONSIVE — Media queries
+   ═══════════════════════════════════════════════════════════════════ */
+
+@media (max-width: 640px) {
+    /* Apilar columnas en formularios */
+    .form-row-2,
+    .form-row-3,
+    .form-row-4 {
+        grid-template-columns: 1fr;
+    }
+
+    /* Resumen de reportes en 2 columnas */
+    .summary-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}

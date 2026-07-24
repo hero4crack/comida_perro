@@ -1,0 +1,32 @@
+/* ═══════════════════════════════════════════════════════════════════
+   BASE — Reset y estilos base globales
+   ═══════════════════════════════════════════════════════════════════ */
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+button {
+    cursor: pointer;
+    font-family: inherit;
+}
+
+input,
+select,
+textarea {
+    font-family: inherit;
+    font-size: 0.875rem;
+}
+
+textarea.form-control {
+    resize: vertical;
+    min-height: 60px;
+}
+
+select.form-control {
+    appearance: auto;
+}
