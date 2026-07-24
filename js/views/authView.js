@@ -5,6 +5,9 @@
 function renderAuth() {
     return `
     <div class="auth-page">
+        <!-- Botón volver a la landing -->
+        <a href="index.html" class="auth-back-link">← Volver al inicio</a>
+
         <div style="margin-bottom:2rem;text-align:center">
             <div style="display:inline-flex;align-items:center;gap:0.75rem">
                 <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--emerald-500),var(--emerald-700));display:flex;align-items:center;justify-content:center;font-size:28px;">🐾</div>

@@ -12,6 +12,32 @@
     background: linear-gradient(135deg, var(--emerald-50), var(--white));
 }
 
+/* Botón "← Volver al inicio" — enlace a index.html (landing) */
+.auth-back-link {
+    position: absolute;
+    top: 1.25rem;
+    left: 1.5rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background: var(--white);
+    color: var(--emerald-700);
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    border: 1px solid var(--emerald-100);
+    box-shadow: 0 2px 8px rgba(5, 150, 105, 0.08);
+    transition: all 0.15s ease;
+}
+
+.auth-back-link:hover {
+    background: var(--emerald-50);
+    border-color: var(--emerald-500);
+    color: var(--emerald-700);
+}
+
 .auth-card {
     width: 100%;
     max-width: 400px;

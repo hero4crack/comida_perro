@@ -8,7 +8,8 @@
 const state = {
     user: null,
     role: null,
-    view: 'auth',          // 'auth' | 'cliente' | 'admin'
+    view: 'cliente',       // app.html siempre la sobreescribe via initAuth()
+    authMode: 'login',     // 'login' | 'register' (usado por login.html)
     tab: 'pedir',          // pestaña activa dentro de la vista actual
     mascotas: [],
     pedidos: [],

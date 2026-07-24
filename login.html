@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimalPet - Iniciar Sesión</title>
+
+    <!-- Supabase JS SDK v2 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- CSS necesario para el form de auth -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/auth.css">
+    <link rel="stylesheet" href="css/feedback.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!--
+        LOGIN.HTML — PANTALLA DE AUTENTICACIÓN
+        - Lee ?mode=register de la URL para abrir directamente en modo registro
+        - El botón "← Volver al inicio" lleva a index.html (landing)
+        - Si ya hay sesión activa → redirige a app.html
+        - Tras login exitoso → redirige a app.html
+    -->
+    <div id="app">
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p style="margin-top:1rem;color:#6b7280;font-size:0.875rem">Cargando...</p>
+        </div>
+    </div>
+
+    <!-- Scripts: config + state + helpers + auth + view + events -->
+    <script src="js/config/supabase.js"></script>
+    <script src="js/state/state.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/services/authService.js"></script>
+    <script src="js/views/authView.js"></script>
+    <script src="js/events.js"></script>
+
+    <script>
+        (async () => {
+            // 1. Leer modo inicial de la URL (?mode=register | ?mode=login | sin param = login)
+            const params = new URLSearchParams(window.location.search);
+            const mode = params.get('mode') === 'register' ? 'register' : 'login';
+            state.authMode = mode;
+
+            // 2. Si ya hay sesión activa, ir directo al dashboard
+            try {
+                const { data: { session } } = await sb.auth.getSession();
+                if (session) {
+                    console.log('👤 Sesión activa, redirigiendo a app.html');
+                    window.location.href = 'app.html';
+                    return;
+                }
+            } catch (err) {
+                console.warn('No se pudo verificar sesión:', err.message);
+            }
+
+            // 3. Renderizar el form de auth
+            document.getElementById('app').innerHTML = renderAuth();
+
+            // 4. Bindear eventos (bindAuthForm lee state.authMode para
+            //    decidir si abre en modo login o registro)
+            bindAuthForm();
+        })();
+    </script>
+</body>
+</html>

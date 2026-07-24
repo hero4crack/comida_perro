@@ -1,0 +1,663 @@
+/* ═══════════════════════════════════════════════════════════════════
+   LANDING — Estilos de la página de inicio pública
+   Usa la paleta esmeralda de AnimalPet (variables.css)
+   ═══════════════════════════════════════════════════════════════════ */
+
+.landing-page {
+    min-height: 100vh;
+    background: var(--emerald-50);
+    color: var(--gray-900);
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+/* ── Barra superior ───────────────────────────────────────────────── */
+.landing-top-bar {
+    background: linear-gradient(90deg, var(--emerald-500), var(--emerald-700));
+    color: var(--white);
+    padding: 0.55rem 1rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.01em;
+}
+
+/* ── Navbar ───────────────────────────────────────────────────────── */
+.landing-navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.9rem 5%;
+    background: var(--white);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.landing-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    text-decoration: none;
+}
+
+.landing-brand-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    background: linear-gradient(135deg, var(--emerald-500), var(--emerald-700));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.landing-brand-name {
+    font-size: 1.45rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+    line-height: 1;
+}
+
+.landing-brand-tagline {
+    font-size: 0.7rem;
+    color: var(--gray-500);
+    font-weight: 500;
+    margin-top: 2px;
+}
+
+.landing-nav-links {
+    display: flex;
+    gap: 1.75rem;
+    list-style: none;
+}
+
+.landing-nav-links a {
+    text-decoration: none;
+    color: var(--gray-700);
+    font-weight: 600;
+    font-size: 0.925rem;
+    transition: color 0.15s;
+}
+
+.landing-nav-links a:hover {
+    color: var(--emerald-600);
+}
+
+.landing-nav-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* ── Botones ──────────────────────────────────────────────────────── */
+.landing-btn {
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    border: none;
+    font-weight: 700;
+    font-size: 0.925rem;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: inherit;
+    white-space: nowrap;
+}
+
+.landing-btn:active { transform: scale(0.98); }
+
+.landing-btn-primary {
+    background: var(--emerald-600);
+    color: var(--white);
+    box-shadow: 0 4px 14px rgba(5, 150, 105, 0.3);
+}
+
+.landing-btn-primary:hover {
+    background: var(--emerald-700);
+    box-shadow: 0 6px 18px rgba(5, 150, 105, 0.4);
+}
+
+.landing-btn-outline {
+    background: transparent;
+    border: 1.5px solid var(--emerald-600);
+    color: var(--emerald-700);
+}
+
+.landing-btn-outline:hover {
+    background: var(--emerald-50);
+}
+
+/* ── Hero ─────────────────────────────────────────────────────────── */
+.landing-hero {
+    padding: 3.5rem 5% 4.5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 3rem;
+    align-items: center;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.landing-hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--emerald-100);
+    color: var(--emerald-700);
+    padding: 0.4rem 0.9rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.8rem;
+    margin-bottom: 1.25rem;
+}
+
+.landing-hero-title {
+    font-size: 3.5rem;
+    line-height: 1.05;
+    color: var(--gray-900);
+    margin-bottom: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+}
+
+.landing-hero-title .accent {
+    color: var(--emerald-600);
+}
+
+.landing-hero-subtitle {
+    font-size: 1.15rem;
+    color: var(--gray-600);
+    margin-bottom: 2rem;
+    line-height: 1.6;
+}
+
+.landing-hero-buttons {
+    display: flex;
+    gap: 0.875rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+}
+
+.landing-hero-buttons .landing-btn-primary {
+    padding: 1rem 1.75rem;
+}
+
+.landing-hero-trust {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-weight: 600;
+    font-size: 0.925rem;
+    color: var(--gray-700);
+}
+
+.landing-hero-trust strong {
+    color: var(--emerald-700);
+    font-size: 1.1rem;
+}
+
+.landing-hero-image {
+    position: relative;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow: 0 20px 50px rgba(5, 150, 105, 0.15);
+    aspect-ratio: 4/3;
+}
+
+.landing-hero-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+.landing-hero-image::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, transparent 60%, rgba(16, 185, 129, 0.15));
+    pointer-events: none;
+}
+
+/* ── Sección oscura con tarjetas de color ─────────────────────────── */
+.landing-color-section {
+    background: var(--gray-900);
+    color: var(--white);
+    padding: 4.5rem 5%;
+    border-radius: 32px;
+    margin: 0 auto 4rem;
+    max-width: 1220px;
+}
+
+.landing-color-section-header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+.landing-color-section-header h2 {
+    font-size: 2.75rem;
+    color: var(--white);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.landing-color-section-header p {
+    color: var(--emerald-100);
+    font-size: 1.1rem;
+}
+
+.landing-cards-grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.landing-card-feature {
+    padding: 2.25rem 1.75rem;
+    border-radius: 20px;
+    color: var(--gray-900);
+    transition: transform 0.2s ease;
+}
+
+.landing-card-feature:hover {
+    transform: translateY(-4px);
+}
+
+.landing-card-feature .icon {
+    font-size: 2.25rem;
+    display: block;
+    margin-bottom: 1rem;
+}
+
+.landing-card-feature h3 {
+    font-size: 1.35rem;
+    margin-bottom: 0.75rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+}
+
+.landing-card-feature p {
+    line-height: 1.6;
+    color: var(--gray-700);
+    font-size: 0.95rem;
+}
+
+.landing-card-emerald {
+    background: var(--emerald-500);
+    color: var(--white);
+}
+.landing-card-emerald p { color: var(--emerald-50); }
+
+.landing-card-light {
+    background: var(--emerald-100);
+}
+
+.landing-card-white {
+    background: var(--white);
+    border: 1px solid var(--gray-200);
+}
+
+/* ── Pasos ────────────────────────────────────────────────────────── */
+.landing-steps-section {
+    padding: 4rem 5%;
+    text-align: center;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.landing-steps-section h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+}
+
+.landing-steps-section > p {
+    color: var(--gray-600);
+    font-size: 1.1rem;
+}
+
+.landing-steps-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+    margin-top: 3rem;
+}
+
+.landing-step-card {
+    background: var(--white);
+    padding: 2.5rem 1.75rem 2rem;
+    border-radius: 20px;
+    position: relative;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.04);
+}
+
+.landing-step-number {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--emerald-600);
+    color: var(--white);
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(5, 150, 105, 0.3);
+}
+
+.landing-step-card h3 {
+    margin: 0.75rem 0 0.5rem;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--gray-900);
+}
+
+.landing-step-card p {
+    color: var(--gray-600);
+    font-size: 0.95rem;
+    line-height: 1.55;
+}
+
+/* ── Píldoras de beneficios ───────────────────────────────────────── */
+.landing-pills-section {
+    background: var(--emerald-100);
+    padding: 3rem 5%;
+    text-align: center;
+}
+
+.landing-pills-section h2 {
+    font-size: 1.75rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    max-width: 720px;
+    margin: 0 auto 1.5rem;
+    line-height: 1.3;
+}
+
+.landing-pills-container {
+    display: flex;
+    justify-content: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+}
+
+.landing-pill-tag {
+    background: var(--white);
+    padding: 0.7rem 1.4rem;
+    border-radius: 999px;
+    font-weight: 700;
+    font-size: 0.925rem;
+    color: var(--emerald-700);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* ── Recetas ───────────────────────────────────────────────────────── */
+.landing-recipes-section {
+    padding: 5rem 5%;
+    text-align: center;
+    max-width: 1280px;
+    margin: 0 auto;
+}
+
+.landing-recipes-section h2 {
+    font-size: 2.75rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+}
+
+.landing-recipes-section > p {
+    color: var(--gray-600);
+    font-size: 1.1rem;
+}
+
+.landing-filter-tabs {
+    display: inline-flex;
+    background: var(--white);
+    padding: 5px;
+    border-radius: 999px;
+    margin: 2rem 0;
+    border: 1px solid var(--gray-200);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.landing-tab-btn {
+    padding: 0.6rem 1.6rem;
+    border-radius: 999px;
+    border: none;
+    background: none;
+    font-weight: 700;
+    cursor: pointer;
+    color: var(--gray-700);
+    font-family: inherit;
+    transition: all 0.15s;
+}
+
+.landing-tab-btn.active {
+    background: var(--emerald-600);
+    color: var(--white);
+}
+
+.landing-recipe-display {
+    display: grid;
+    grid-template-columns: 280px 1fr;
+    gap: 2rem;
+    text-align: left;
+}
+
+.landing-recipe-sidebar-card {
+    background: var(--white);
+    padding: 1.4rem;
+    border-radius: 16px;
+    border: 2px solid transparent;
+    transition: all 0.15s;
+    cursor: pointer;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+}
+
+.landing-recipe-sidebar-card.active {
+    border-color: var(--emerald-500);
+    background: var(--emerald-50);
+}
+
+.landing-recipe-sidebar-card h3 {
+    font-size: 1.15rem;
+    margin-bottom: 0.4rem;
+    font-weight: 700;
+}
+
+.landing-recipe-sidebar-card p {
+    font-size: 0.85rem;
+    color: var(--gray-600);
+    line-height: 1.45;
+}
+
+.landing-recipe-main-card {
+    background: var(--white);
+    padding: 2.25rem;
+    border-radius: 20px;
+    border: 1px solid var(--gray-200);
+}
+
+.landing-recipe-main-card h2 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.landing-recipe-main-card > p {
+    margin-bottom: 1.5rem;
+    color: var(--gray-600);
+}
+
+.landing-recipe-main-card h4 {
+    font-weight: 700;
+    margin: 1rem 0 0.5rem;
+    color: var(--gray-800);
+}
+
+.landing-ingredient-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0.75rem 0 1rem;
+}
+
+.landing-ing-tag {
+    background: var(--emerald-50);
+    color: var(--emerald-700);
+    padding: 0.4rem 0.85rem;
+    border-radius: 999px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+/* ── FAQ ──────────────────────────────────────────────────────────── */
+.landing-faq-section {
+    padding: 4rem 15%;
+    text-align: center;
+    background: var(--emerald-50);
+}
+
+.landing-faq-section h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--gray-900);
+    margin-bottom: 0.5rem;
+    letter-spacing: -0.02em;
+}
+
+.landing-faq-section > p {
+    color: var(--gray-600);
+    margin-bottom: 2.5rem;
+    font-size: 1.05rem;
+}
+
+.landing-faq-item {
+    background: var(--white);
+    border-radius: 14px;
+    margin-bottom: 0.875rem;
+    text-align: left;
+    overflow: hidden;
+    border: 1px solid var(--gray-200);
+    transition: box-shadow 0.15s;
+}
+
+.landing-faq-item:hover {
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.05);
+}
+
+.landing-faq-header {
+    padding: 1.2rem 1.5rem;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.05rem;
+    color: var(--gray-900);
+}
+
+.landing-faq-header .chevron {
+    color: var(--emerald-600);
+    transition: transform 0.2s;
+    font-size: 1.2rem;
+    font-weight: 800;
+}
+
+.landing-faq-item.open .landing-faq-header .chevron {
+    transform: rotate(180deg);
+}
+
+.landing-faq-body {
+    padding: 0 1.5rem 1.2rem;
+    display: none;
+    color: var(--gray-600);
+    line-height: 1.6;
+}
+
+.landing-faq-item.open .landing-faq-body {
+    display: block;
+}
+
+/* ── CTA final ────────────────────────────────────────────────────── */
+.landing-cta {
+    background: linear-gradient(135deg, var(--emerald-600), var(--emerald-700));
+    padding: 4rem 5%;
+    text-align: center;
+    color: var(--white);
+}
+
+.landing-cta h2 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 0.75rem;
+    letter-spacing: -0.02em;
+}
+
+.landing-cta p {
+    font-size: 1.15rem;
+    margin-bottom: 2rem;
+    opacity: 0.95;
+}
+
+.landing-cta .landing-btn-primary {
+    background: var(--white);
+    color: var(--emerald-700);
+    padding: 1rem 2rem;
+    font-size: 1rem;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15);
+}
+
+.landing-cta .landing-btn-primary:hover {
+    background: var(--emerald-50);
+}
+
+/* ── Footer ───────────────────────────────────────────────────────── */
+.landing-footer {
+    background: var(--gray-900);
+    color: var(--gray-300);
+    padding: 2.5rem 5%;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.landing-footer .brand {
+    color: var(--white);
+    font-weight: 800;
+    font-size: 1.1rem;
+    margin-bottom: 0.5rem;
+}
+
+/* ── Responsive ───────────────────────────────────────────────────── */
+@media (max-width: 900px) {
+    .landing-hero,
+    .landing-cards-grid-3,
+    .landing-steps-grid,
+    .landing-recipe-display {
+        grid-template-columns: 1fr;
+    }
+    .landing-hero-title { font-size: 2.5rem; }
+    .landing-nav-links { display: none; }
+    .landing-faq-section { padding: 4rem 5%; }
+    .landing-color-section {
+        margin: 0 1rem 3rem;
+        padding: 3rem 1.5rem;
+    }
+    .landing-color-section-header h2 { font-size: 2rem; }
+    .landing-recipes-section h2 { font-size: 2rem; }
+    .landing-steps-section h2 { font-size: 2rem; }
+    .landing-hero { padding: 2.5rem 5% 3rem; }
+}

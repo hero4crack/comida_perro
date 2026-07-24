@@ -5,71 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AnimalPet - Comida Natural para Perros y Gatos</title>
 
-    <!-- Supabase JS SDK v2 (debe cargarse antes que los scripts de la app) -->
+    <!-- Supabase JS SDK v2 (para detectar sesión y redirigir si ya está logueado) -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-    <!-- Hojas de estilo modulares -->
+    <!-- CSS mínimo para la landing -->
     <link rel="stylesheet" href="css/variables.css">
     <link rel="stylesheet" href="css/base.css">
-    <link rel="stylesheet" href="css/layout.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/forms.css">
-    <link rel="stylesheet" href="css/auth.css">
-    <link rel="stylesheet" href="css/admin.css">
-    <link rel="stylesheet" href="css/feedback.css">
+    <link rel="stylesheet" href="css/landing.css">
     <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
     <!--
-        Punto de montaje único. El contenido se inyecta dinámicamente
-        desde js/app.js → render(). Mientras carga la app, spinner.
+        INDEX.HTML — PÁGINA DE INICIO (LANDING)
+        Punto de entrada principal al abrir la app.
+        - Si el usuario ya tiene sesión activa → redirige a app.html
+        - Si no → muestra la landing de marketing
+        Los botones "Iniciar Sesión" / "Crear Mi Plan" navegan a login.html
     -->
     <div id="app">
         <div class="loading-container">
             <div style="text-align:center">
-                <div style="display:inline-flex;align-items:center;gap:0.75rem;margin-bottom:2rem">
-                    <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--emerald-500),var(--emerald-700));display:flex;align-items:center;justify-content:center;font-size:28px;">🐾</div>
-                    <div style="text-align:left">
-                        <h1 style="font-size:1.5rem;font-weight:700;color:#111827">AnimalPet</h1>
-                        <p style="font-size:0.8rem;color:#6b7280">Comida Natural para Perros y Gatos</p>
-                    </div>
-                </div>
                 <div class="spinner"></div>
-                <p style="margin-top:1rem;color:#6b7280;font-size:0.875rem">Cargando...</p>
+                <p style="margin-top:1rem;color:#6b7280;font-size:0.875rem">Cargando AnimalPet...</p>
             </div>
         </div>
     </div>
 
-    <!--
-        Scripts modulares en ORDEN TOPOLÓGICO (cada archivo depende de
-        los anteriores). Cargados como scripts clásicos (sin
-        type="module") para que funcionen con file:// (doble clic) y
-        también vía servidor HTTP. Cada persona del equipo puede
-        trabajar en su(s) archivo(s) sin tocar los demás.
-
-        Orden:
-          1. config/     → credenciales y constantes
-          2. state/      → estado global
-          3. utils/      → helpers (esc, toast, showLoading)
-          4. services/   → lógica de negocio (auth, data, precios, operaciones)
-          5. views/      → plantillas HTML (auth, cliente, admin)
-          6. events.js   → bindEvents tras cada render
-          7. app.js      → render() + exposición global en window
-          8. main.js     → punto de entrada (initAuth)
-    -->
+    <!-- Scripts mínimos para la landing -->
     <script src="js/config/supabase.js"></script>
-    <script src="js/config/constants.js"></script>
-    <script src="js/state/state.js"></script>
-    <script src="js/utils/helpers.js"></script>
-    <script src="js/services/dataService.js"></script>
-    <script src="js/services/preciosService.js"></script>
-    <script src="js/services/operacionesService.js"></script>
-    <script src="js/services/authService.js"></script>
-    <script src="js/views/authView.js"></script>
-    <script src="js/views/clienteView.js"></script>
-    <script src="js/views/adminView.js"></script>
-    <script src="js/events.js"></script>
-    <script src="js/app.js"></script>
-    <script src="js/main.js"></script>
+    <script src="js/views/landingView.js"></script>
+
+    <script>
+        // Exponer toggleFaq en window (los handlers onclick lo usan)
+        window.toggleFaq = toggleFaq;
+        window.goToAuth = goToAuth;
+
+        (async () => {
+            try {
+                // Si ya hay sesión, saltar directo al dashboard
+                const { data: { session } } = await sb.auth.getSession();
+                if (session) {
+                    console.log('👤 Sesión activa, redirigiendo a app.html');
+                    window.location.href = 'app.html';
+                    return;
+                }
+            } catch (err) {
+                console.warn('No se pudo verificar sesión, mostrando landing:', err.message);
+            }
+
+            // No hay sesión → mostrar la landing
+            document.getElementById('app').innerHTML = renderLanding();
+        })();
+    </script>
 </body>
 </html>

@@ -1,6 +1,12 @@
 // ═══════════════════════════════════════════════════════════════════
 //  AUTH SERVICE — Autenticación con Supabase
 //  Maneja login, registro, logout, sesión y rol del usuario.
+//
+//  Arquitectura multi-página:
+//    · index.html  → landing (no usa este archivo)
+//    · login.html  → usa login() y register() (devuelven bool)
+//    · app.html    → usa initAuth() y setupAuthListener() para cargar
+//                    el dashboard y reaccionar a cambios de sesión
 // ═══════════════════════════════════════════════════════════════════
 
 /**
@@ -48,7 +54,7 @@ async function getUserRole(userId, email) {
 
 /**
  * Carga los datos correspondientes al rol del usuario (admin o cliente)
- * y actualiza la vista/tab activa.
+ * y actualiza la vista/tab activa. Solo se llama desde app.html.
  */
 async function loadUserDataForRole() {
     if (state.role === 'admin') {
@@ -62,7 +68,9 @@ async function loadUserDataForRole() {
 }
 
 /**
- * Verifica sesión existente al cargar la página.
+ * Verifica sesión existente al cargar app.html.
+ * Si hay sesión → carga datos del usuario y renderiza el dashboard.
+ * Si NO hay sesión → redirige a login.html.
  */
 async function initAuth() {
     console.log('🔍 Verificando sesión...');
@@ -75,9 +83,19 @@ async function initAuth() {
             state.role = role;
             state.view = role === 'admin' ? 'admin' : 'cliente';
 
+            // Asegurar que el cliente exista en la tabla clientes
+            if (state.view === 'cliente') {
+                await ensureClienteExists();
+            }
+
             await loadUserDataForRole();
 
             console.log('👤 Usuario:', session.user.email, '| Rol:', state.role);
+        } else {
+            // Sin sesión → a login
+            console.log('👋 Sin sesión, redirigiendo a login.html');
+            window.location.href = 'login.html';
+            return;
         }
     } catch (err) {
         console.error('❌ Error verificando sesión:', err);
@@ -87,8 +105,10 @@ async function initAuth() {
 }
 
 /**
- * Suscribe la app a cambios de estado de auth (login/logout en otra pestaña, etc.)
- * Debe llamarse una sola vez al iniciar.
+ * Suscribe la app a cambios de estado de auth.
+ * Solo se llama desde app.html.
+ * - SIGNED_IN / INITIAL_SESSION con sesión → cargar dashboard
+ * - SIGNED_OUT / sin sesión → redirigir a index.html (landing)
  */
 function setupAuthListener() {
     sb.auth.onAuthStateChange(async (event, session) => {
@@ -103,23 +123,20 @@ function setupAuthListener() {
             await loadUserDataForRole();
 
             console.log('👤 Sesión iniciada:', session.user.email, '| Rol:', state.role);
+            render();
         } else {
-            state.user = null;
-            state.role = null;
-            state.view = 'auth';
-            state.tab = 'pedir';
-            state.mascotas = [];
-            state.pedidos = [];
-            state.preciosConfig = [];
-            console.log('👋 Sesión cerrada');
+            // Sesión cerrada → a la landing
+            console.log('👋 Sesión cerrada, redirigiendo a index.html');
+            window.location.href = 'login.html';
         }
-
-        render();
     });
 }
 
 /**
  * Inicia sesión con email + password.
+ * Solo autentica y guarda el usuario en state. NO carga datos del
+ * dashboard ni hace render — app.html se encarga de todo eso al
+ * detectar la sesión nueva.
  * @returns {Promise<boolean>} true si el login fue exitoso
  */
 async function login(email, password) {
@@ -150,24 +167,8 @@ async function login(email, password) {
         state.user = data.user;
         console.log('👤 Usuario logueado:', state.user.email);
 
-        const clienteOk = await ensureClienteExists();
-        if (!clienteOk) {
-            console.error('❌ Error al asegurar la existencia del cliente');
-            toast('Error al configurar tu perfil. Intenta de nuevo.', 'error');
-            showLoading(false);
-            return false;
-        }
-
-        const role = await getUserRole(state.user.id, state.user.email);
-        state.role = role;
-        console.log('👤 Rol:', state.role);
-
-        await loadUserDataForRole();
-
-        render();
-
-        const nombre = state.user.user_metadata?.nombre || state.user.email;
-        toast(`👋 ¡Bienvenido ${nombre}!`, 'success');
+        // Asegurar que el cliente exista (por si acaso)
+        await ensureClienteExists();
 
         showLoading(false);
         return true;
@@ -182,6 +183,7 @@ async function login(email, password) {
 
 /**
  * Registra un nuevo usuario + cliente + profile.
+ * @returns {Promise<boolean>} true si el registro fue exitoso
  */
 async function register(nombre, email, password, telefono, direccion) {
     showLoading(true);
@@ -203,13 +205,13 @@ async function register(nombre, email, password, telefono, direccion) {
             console.error('❌ Error registro:', error);
             toast(error.message, 'error');
             showLoading(false);
-            return;
+            return false;
         }
 
         if (!data.user) {
             toast('Error: No se pudo crear el usuario', 'error');
             showLoading(false);
-            return;
+            return false;
         }
 
         console.log('✅ Usuario registrado:', data.user.id);
@@ -231,7 +233,7 @@ async function register(nombre, email, password, telefono, direccion) {
             console.error('❌ Error creando cliente:', clienteError);
             toast('Usuario creado pero error al crear perfil. Contacta al administrador.', 'error');
             showLoading(false);
-            return;
+            return false;
         }
 
         const { error: profileError } = await sbAdmin
@@ -248,31 +250,25 @@ async function register(nombre, email, password, telefono, direccion) {
 
         toast('✅ Cuenta creada exitosamente. Por favor inicia sesión.', 'success');
         showLoading(false);
-
-        const toggle = document.getElementById('auth-toggle-link');
-        if (toggle) toggle.click();
+        return true;
 
     } catch (err) {
         console.error('❌ Error en registro:', err);
         toast('Error al crear cuenta: ' + err.message, 'error');
         showLoading(false);
+        return false;
     }
 }
 
 /**
- * Cierra la sesión actual.
+ * Cierra la sesión actual y redirige a la landing (index.html).
  */
 async function logout() {
     console.log('👋 Cerrando sesión...');
     await sb.auth.signOut();
-    state.view = 'auth';
-    state.tab = 'pedir';
-    state.mascotas = [];
-    state.pedidos = [];
-    state.preciosConfig = [];
-    state.user = null;
-    state.role = null;
-    render();
+    // La redirección la maneja setupAuthListener() al detectar SIGNED_OUT,
+    // pero por si acaso forzamos aquí también:
+    window.location.href = 'login.html';
 }
 
 /**

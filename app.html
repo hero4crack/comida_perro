@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AnimalPet - Mi Panel</title>
+
+    <!-- Supabase JS SDK v2 (debe cargarse antes que los scripts de la app) -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <!-- Hojas de estilo del dashboard -->
+    <link rel="stylesheet" href="css/variables.css">
+    <link rel="stylesheet" href="css/base.css">
+    <link rel="stylesheet" href="css/layout.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/forms.css">
+    <link rel="stylesheet" href="css/admin.css">
+    <link rel="stylesheet" href="css/feedback.css">
+    <link rel="stylesheet" href="css/responsive.css">
+</head>
+<body>
+    <!--
+        APP.HTML — DASHBOARD (cliente / admin)
+        Se abre automáticamente tras login exitoso (desde login.html).
+        - Si no hay sesión → redirige a login.html
+        - Tras logout → redirige a login.html (vía setupAuthListener)
+        - render() aquí solo maneja las vistas 'cliente' y 'admin'
+    -->
+    <div id="app">
+        <div class="loading-container">
+            <div style="text-align:center">
+                <div style="display:inline-flex;align-items:center;gap:0.75rem;margin-bottom:2rem">
+                    <div style="width:56px;height:56px;border-radius:16px;background:linear-gradient(135deg,var(--emerald-500),var(--emerald-700));display:flex;align-items:center;justify-content:center;font-size:28px;">🐾</div>
+                    <div style="text-align:left">
+                        <h1 style="font-size:1.5rem;font-weight:700;color:#111827">AnimalPet</h1>
+                        <p style="font-size:0.8rem;color:#6b7280">Cargando tu panel...</p>
+                    </div>
+                </div>
+                <div class="spinner"></div>
+                <p style="margin-top:1rem;color:#6b7280;font-size:0.875rem">Cargando...</p>
+            </div>
+        </div>
+    </div>
+
+    <!--
+        Scripts modulares en ORDEN TOPOLÓGICO.
+        Cada persona del equipo puede trabajar en su(s) archivo(s)
+        sin tocar los demás.
+
+        Orden:
+          1. config/     → credenciales y constantes
+          2. state/      → estado global
+          3. utils/      → helpers (esc, toast, showLoading)
+          4. services/   → lógica de negocio (auth, data, precios, operaciones)
+          5. views/      → plantillas HTML (cliente, admin)
+                          (landingView y authView no se cargan aquí — son
+                          páginas aparte: index.html y login.html)
+          6. events.js   → bindEvents tras cada render
+          7. app.js      → render() + exposición global en window
+          8. main.js     → punto de entrada (initAuth + setupAuthListener)
+    -->
+    <script src="js/config/supabase.js"></script>
+    <script src="js/config/constants.js"></script>
+    <script src="js/state/state.js"></script>
+    <script src="js/utils/helpers.js"></script>
+    <script src="js/services/dataService.js"></script>
+    <script src="js/services/preciosService.js"></script>
+    <script src="js/services/operacionesService.js"></script>
+    <script src="js/services/authService.js"></script>
+    <script src="js/views/clienteView.js"></script>
+    <script src="js/views/adminView.js"></script>
+    <script src="js/events.js"></script>
+    <script src="js/app.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>

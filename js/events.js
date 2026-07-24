@@ -23,7 +23,7 @@ function bindAuthForm() {
     const authForm = document.getElementById('auth-form');
     if (!authForm) return;
 
-    let isLogin = true;
+    let isLogin = state.authMode !== 'register';   // respeta el modo pedido desde la landing
     const toggle = document.getElementById('auth-toggle-link');
     const extra = document.getElementById('auth-extra-fields');
     const extra2 = document.getElementById('auth-extra-fields-2');
@@ -50,6 +50,9 @@ function bindAuthForm() {
         }
     }
 
+    // Aplicar el modo inicial (login o register) según vengamos de la landing
+    setMode(isLogin);
+
     if (toggle) toggle.addEventListener('click', () => setMode(!isLogin));
 
     authForm.addEventListener('submit', async (e) => {
@@ -59,12 +62,21 @@ function bindAuthForm() {
         const password = fd.get('password');
 
         if (isLogin) {
-            await login(email, password);
+            const ok = await login(email, password);
+            if (ok) {
+                // Login exitoso → al dashboard
+                toast(`👋 ¡Bienvenido ${email.split('@')[0]}!`, 'success');
+                window.location.href = 'app.html';
+            }
         } else {
             const nombre = fd.get('nombre');
             const telefono = fd.get('telefono');
             const direccion = fd.get('direccion');
-            await register(nombre, email, password, telefono, direccion);
+            const ok = await register(nombre, email, password, telefono, direccion);
+            if (ok) {
+                // Registro exitoso → cambiar a modo login para que inicie sesión
+                setMode(true);
+            }
         }
     });
 }
